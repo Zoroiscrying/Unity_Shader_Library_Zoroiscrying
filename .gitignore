@@ -1,17 +1,50 @@
 # This .gitignore file should be placed at the root of your Unity project directory
 #
-# Get latest from https://github.com/github/gitignore/blob/master/Unity.gitignore
-#
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Mm]emoryCaptures/
+# Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
+# 
+# Customized Folder Ignore for multiple projects
+# When a new project is created this format should be followed as well.
+/Unity_HDRP_Projects/ZoroiscryingUnityShaderLibraryHDRP/[Ll]ibrary/
+/Unity_Standard_Projects/Zoroiscrying_Unity_Shader_Library_Standard/[Ll]ibrary/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibraryURP3D/[Ll]ibrary/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibURP2D/[Ll]ibrary/
 
-# Asset meta data should only be ignored when the corresponding asset is also ignored
-!/[Aa]ssets/**/*.meta
+/Unity_HDRP_Projects/ZoroiscryingUnityShaderLibraryHDRP/[Tt]emp/
+/Unity_Standard_Projects/Zoroiscrying_Unity_Shader_Library_Standard/[Tt]emp/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibraryURP3D/[Tt]emp/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibURP2D/[Tt]emp/
+
+/Unity_HDRP_Projects/ZoroiscryingUnityShaderLibraryHDRP/[Oo]bj/
+/Unity_Standard_Projects/Zoroiscrying_Unity_Shader_Library_Standard/[Oo]bj/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibraryURP3D/[Oo]bj/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibURP2D/[Oo]bj/
+
+/Unity_HDRP_Projects/ZoroiscryingUnityShaderLibraryHDRP/[Bb]uild/
+/Unity_Standard_Projects/Zoroiscrying_Unity_Shader_Library_Standard/[Bb]uild/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibraryURP3D/[Bb]uild/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibURP2D/[Bb]uild/
+
+/Unity_HDRP_Projects/ZoroiscryingUnityShaderLibraryHDRP/[Bb]uilds/
+/Unity_Standard_Projects/Zoroiscrying_Unity_Shader_Library_Standard/[Bb]uilds/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibraryURP3D/[Bb]uilds/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibURP2D/[Bb]uilds/
+
+/Unity_HDRP_Projects/ZoroiscryingUnityShaderLibraryHDRP/[Ll]ogs/
+/Unity_Standard_Projects/Zoroiscrying_Unity_Shader_Library_Standard/[Ll]ogs/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibraryURP3D/[Ll]ogs/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibURP2D/[Ll]ogs/
+
+/Unity_HDRP_Projects/ZoroiscryingUnityShaderLibraryHDRP/[Uu]ser[Ss]ettings/
+/Unity_Standard_Projects/Zoroiscrying_Unity_Shader_Library_Standard/[Uu]ser[Ss]ettings/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibraryURP3D/[Uu]ser[Ss]ettings/
+/Unity_URP_Projects/ZoroiscryingUnityShaderLibURP2D/[Uu]ser[Ss]ettings/
+
+# MemoryCaptures can get excessive in size.
+# They also could contain extremely sensitive data
+[Mm]emoryCaptures/
+
+# Recordings can get excessive in size
+[Rr]ecordings/
 
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
@@ -53,8 +86,16 @@ sysinfo.txt
 
 # Builds
 *.apk
+*.aab
 *.unitypackage
+*.app
 
 # Crashlytics generated file
 crashlytics-build.properties
 
+# Packed Addressables
+[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+
+# Temporary auto-generated Android Assets
+[Aa]ssets/[Ss]treamingAssets/aa.meta
+[Aa]ssets/[Ss]treamingAssets/aa/*
