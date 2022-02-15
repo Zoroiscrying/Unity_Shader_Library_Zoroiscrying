@@ -42,6 +42,13 @@ Shader "Custom/Object/Vertex_Displacement_Shader"
         [Normal] _DetailNormalMap("Normal Map", 2D) = "bump" {}
 
         // Blending state
+        _Surface("__surface", Float) = 0.0
+        _Blend("__blend", Float) = 0.0
+        _Cull("__cull", Float) = 2.0
+        [ToggleUI] _AlphaClip("__clip", Float) = 0.0
+        [HideInInspector] _SrcBlend("__src", Float) = 1.0
+        [HideInInspector] _DstBlend("__dst", Float) = 0.0
+        [HideInInspector] _ZWrite("__zw", Float) = 1.0
 
         [ToggleUI] _ReceiveShadows("Receive Shadows", Float) = 1.0
         // Editmode props
@@ -52,6 +59,17 @@ Shader "Custom/Object/Vertex_Displacement_Shader"
         _DisplacementAmplitude("Displacement Amplitude", Vector) = (0,0,0.5,0)
         _SampleFrequency("Sample Frequency", Float) = 1.0
         _SampleSpeed("Sample Speed", Float) = 10.0
+        
+        [HDR]_DisplaceColor("Displaced Color Variation", Color) = (1,1,1,1)
+        _DisplaceColorRamp("Displace color ramp", 2D) = "grey" {}
+        _DisplaceColorBlendStrength("Displace Color Blend Strength", Float) = 0.2
+        _DisplaceStrengthPower("Displace Strength Power", Float) = 4.0
+        
+        [Toggle(_SAMPLE_SINE)] _Sample_Sine ("Sample Sine", Float) = 0
+        [Toggle(_SAMPLE_NOISE)] _Sample_Noise ("Sample Noise", Float) = 0
+        [Toggle(_SAMPLE_OTHER)] _Sample_Other ("Sample Other", Float) = 0
+        [Toggle(_SAMPLE_UNSTABLE_ENERGY)] _Sample_Unstable_Energy ("Sample Other", Float) = 0
+        [KeywordEnum(Sine, Noise, Other)]_SampleMode("Sample Mode", Float) = 0.0
         
     }
     
@@ -82,8 +100,8 @@ Shader "Custom/Object/Vertex_Displacement_Shader"
             Name "ForwardLit"
             Tags{"LightMode" = "UniversalForward"}
 
-            //Blend[_SrcBlend][_DstBlend]
-            //ZWrite[_ZWrite]
+            Blend[_SrcBlend][_DstBlend]
+            ZWrite[_ZWrite]
             Cull BACK
 
             HLSLPROGRAM
@@ -140,6 +158,12 @@ Shader "Custom/Object/Vertex_Displacement_Shader"
             #pragma vertex LitPassVertex
             #pragma fragment LitPassFragment
 
+            // Vertex Displacement
+            #pragma shader_feature_local _SAMPLE_SINE
+            #pragma shader_feature_local _SAMPLE_NOISE
+            #pragma shader_feature_local _SAMPLE_OTHER
+            #pragma shader_feature_local _SAMPLE_UNSTABLE_ENERGY
+
             #include "../../../ShaderLibrary/Template/CustomLitInput.hlsl"
             #include "./BasicDisplacementPass.hlsl"
             ENDHLSL
@@ -177,6 +201,10 @@ Shader "Custom/Object/Vertex_Displacement_Shader"
 
             // This is used during shadow map generation to differentiate between directional and punctual light shadows, as they use different formulas to apply Normal Bias
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+
+            #pragma shader_feature_local _SAMPLE_SINE
+            #pragma shader_feature_local _SAMPLE_NOISE
+            #pragma shader_feature_local _SAMPLE_OTHER
 
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment

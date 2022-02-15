@@ -9,6 +9,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
         NormalMap,
         ThumbnailTexture,
         EditorHeader,
+        CheckKeywordEnabledOrNot,
     }
     
     public struct MaterialPropertyNamePair

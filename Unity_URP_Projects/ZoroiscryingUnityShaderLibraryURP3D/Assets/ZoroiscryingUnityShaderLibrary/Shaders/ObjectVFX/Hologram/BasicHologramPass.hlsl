@@ -344,7 +344,7 @@ half4 LitPassFragment(Varyings input) : SV_Target
 #endif
 
     #if _SCREEN_SPACE_TRANSPARENT
-    half3 sceneColor = SampleSceneColor(input.positionSS.xy / input.positionSS.w);
+    half3 sceneColor = lerp(SampleSceneColor(input.positionSS.xy / input.positionSS.w), half3(1,0,1), 0.25);
     half4 color = half4(surfaceData.emission + sceneColor, 1.0);
     #else
     half4 color = UniversalFragmentPBR(inputData, surfaceData);

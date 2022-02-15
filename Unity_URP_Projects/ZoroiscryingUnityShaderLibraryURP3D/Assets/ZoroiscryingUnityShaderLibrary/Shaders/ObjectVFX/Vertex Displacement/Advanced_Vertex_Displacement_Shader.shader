@@ -1,28 +1,9 @@
-Shader "Custom/Object/Lit_Basic_Dissolve"
+Shader "Custom/Object/Advanced_Vertex_Displacement_Shader"
 {
-    /*
-    The properties that should be included in most shader:
-    [MainTexture] _BaseMap("Albedo", 2D) = "white" {}
-    [MainColor] _BaseColor("Color", Color) = (1,1,1,1)
-    _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
-    [HDR] _EmissionColor("Color", Color) = (0,0,0)
-    _EmissionMap("Emission", 2D) = "white" {}
-    // Blending state
-    _Surface("__surface", Float) = 0.0
-    _Blend("__blend", Float) = 0.0
-    _Cull("__cull", Float) = 2.0
-    [ToggleUI] _AlphaClip("__clip", Float) = 0.0
-    [HideInInspector] _SrcBlend("__src", Float) = 1.0
-    [HideInInspector] _DstBlend("__dst", Float) = 0.0
-    [HideInInspector] _ZWrite("__zw", Float) = 1.0
-    [ToggleUI] _ReceiveShadows("Receive Shadows", Float) = 1.0
-    // Editmode props
-    _QueueOffset("Queue offset", Float) = 0.0
-    */
     Properties
     {
         // Specular vs Metallic workflow
-        _WorkflowMode("WorkflowMode", Float) = 1.0
+        //_WorkflowMode("WorkflowMode", Float) = 1.0
 
         [MainTexture] _BaseMap("Albedo", 2D) = "white" {}
         [MainColor] _BaseColor("Color", Color) = (1,1,1,1)
@@ -30,6 +11,7 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
         _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
+        _SmoothnessMap("Smoothness Texture", 2D) = "grey" {}
         _SmoothnessTextureChannel("Smoothness texture channel", Float) = 0
 
         _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
@@ -59,10 +41,6 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
         _DetailNormalMapScale("Scale", Range(0.0, 2.0)) = 1.0
         [Normal] _DetailNormalMap("Normal Map", 2D) = "bump" {}
 
-        // SRP batching compatibility for Clear Coat (Not used in Lit)
-        [HideInInspector] _ClearCoatMask("_ClearCoatMask", Float) = 0.0
-        [HideInInspector] _ClearCoatSmoothness("_ClearCoatSmoothness", Float) = 0.0
-
         // Blending state
         _Surface("__surface", Float) = 0.0
         _Blend("__blend", Float) = 0.0
@@ -76,24 +54,18 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
         // Editmode props
         _QueueOffset("Queue offset", Float) = 0.0
         
-        // Dissolve properties
-        [KeywordEnum(POSITION_BASED, DISTANCE_BASED, UV_BASED)] _Dissolve("Dissolve Mode", Float) = 0.0
-        _DissolveSpan("Dissolve Edge Span", Float) = 0.1
-        [HDR]_DissolveColor("Dissolve Color", Color) = (4, 0, 0, 0)
+        // Vertex Displacement Properties
+        _DisplacementDirection("Displacement Direction", Vector) = (1,0,0,0)
+        _DisplacementAmplitude("Displacement Amplitude", Vector) = (0,0,0.5,0)
+        _SampleFrequency("Sample Frequency", Float) = 1.0
+        _SampleSpeed("Sample Speed", Float) = 10.0
         
-        // Noise Settings
-        _NoiseScale("Noise Sampling Scale", Vector) = (1,1,1,1)
-        _NoiseValueScaleFactor("Noise Value Scale Factor", Float) = 1.0
+        [HDR]_DisplaceColor("Displaced Color Variation", Color) = (1,1,1,1)
+        _DisplaceColorBlendStrength("Displace Color Blend Strength", Float) = 0.2
+        _DisplaceStrengthPower("Displace Strength Power", Float) = 4.0
         
-        // Position Based Dissolve
-        _PositionDissolveEdge("Dissolve Position Edge", Float) = 0.5
-        
-        // Distance Based Dissolve
-        _DistanceDissolveEdge("Dissolve Distance Edge", Float) = 0.5
-        _DistanceDissolveReferencePoint("Distance Dissolve Coordinate", Vector) = (0,0,0,0)
-        
-        // UV Based Dissolve
-        _UVDissolveEdge("UV Dissolve Edge", Range(0, 1)) = 0.5
+        [Toggle(_SAMPLE_SINE)] _Sample_Sine ("Sample Sine", Float) = 0
+        [Toggle(_SAMPLE_NOISE)] _Sample_Noise ("Sample Noise", Float) = 0
         
     }
     
@@ -101,7 +73,8 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
     // - UniversalForward
     // - ShadowCaster
     // - DepthOnly
-
+    // - DepthNormals
+    // - Meta
     SubShader
     {
         // Universal Pipeline tag is required. If Universal render pipeline is not set in the graphics settings
@@ -125,7 +98,7 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
 
             Blend[_SrcBlend][_DstBlend]
             ZWrite[_ZWrite]
-            Cull[_Cull]
+            Cull BACK
 
             HLSLPROGRAM
             #pragma exclude_renderers gles gles3 glcore
@@ -181,12 +154,12 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
             #pragma vertex LitPassVertex
             #pragma fragment LitPassFragment
 
-            //---------------------------------------
-            // Dissolve Shader Keywords
-            #pragma multi_compile _ _DISSOLVE_POSITION_BASED _DISSOLVE_DISTANCE_BASED _DISSOLVE_UV_BASED
+            // Vertex Displacement
+            #pragma shader_feature_local _SAMPLE_SINE
+            #pragma shader_feature_local _SAMPLE_NOISE
 
             #include "../../../ShaderLibrary/Template/CustomLitInput.hlsl"
-            #include "BasicDissolvePass.hlsl"
+            #include "./AdvancedDisplacementPass.hlsl"
             ENDHLSL
         }
 
@@ -201,7 +174,7 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
             ZWrite On
             ZTest LEqual
             ColorMask 0
-            Cull[_Cull]
+            Cull BACK
 
             HLSLPROGRAM
             #pragma exclude_renderers gles gles3 glcore
@@ -223,11 +196,16 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
             // This is used during shadow map generation to differentiate between directional and punctual light shadows, as they use different formulas to apply Normal Bias
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
 
+            #pragma shader_feature_local _SAMPLE_SINE
+            #pragma shader_feature_local _SAMPLE_NOISE
+            #pragma shader_feature_local _SAMPLE_OTHER
+
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
 
             #include "../../../ShaderLibrary/Template/CustomLitInput.hlsl"
-            #include "../../../ShaderLibrary/Template/CustomShadowCasterPass.hlsl"
+            #include "./BasicDisplacementShadowCasterPass.hlsl"
+            //#include "../../../ShaderLibrary/Template/CustomShadowCasterPass.hlsl"
             ENDHLSL
         }
 
@@ -239,7 +217,7 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
 
             ZWrite On
             ColorMask 0
-            Cull[_Cull]
+            Cull BACK
 
             HLSLPROGRAM
             #pragma exclude_renderers gles gles3 glcore
@@ -262,8 +240,73 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
             #include "../../../ShaderLibrary/Template/CustomDepthOnlyPass.hlsl"
             ENDHLSL
         }
+
+        // This pass is used when drawing to a _CameraNormalsTexture texture
+        Pass
+        {
+            Name "DepthNormals"
+            Tags{"LightMode" = "DepthNormals"}
+
+            ZWrite On
+            Cull BACK
+
+            HLSLPROGRAM
+            #pragma exclude_renderers gles gles3 glcore
+            #pragma target 4.5
+
+            #pragma vertex DepthNormalsVertex
+            #pragma fragment DepthNormalsFragment
+
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature_local _NORMALMAP
+            #pragma shader_feature_local _PARALLAXMAP
+            #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+
+            //--------------------------------------
+            // GPU Instancing
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #include "../../../ShaderLibrary/Template/CustomLitInput.hlsl"
+            #include "../../../ShaderLibrary/Template/CustomLitDepthNormalsPass.hlsl"
+            ENDHLSL
+        }
+
+        // This pass it not used during regular rendering, only for lightmap baking.
+        Pass
+        {
+            Name "Meta"
+            Tags{"LightMode" = "Meta"}
+
+            Cull Off
+
+            HLSLPROGRAM
+            #pragma exclude_renderers gles gles3 glcore
+            #pragma target 4.5
+
+            #pragma vertex UniversalVertexMeta
+            #pragma fragment UniversalFragmentMetaLit
+
+            #pragma shader_feature EDITOR_VISUALIZATION
+            #pragma shader_feature_local_fragment _SPECULAR_SETUP
+            #pragma shader_feature_local_fragment _EMISSION
+            #pragma shader_feature_local_fragment _METALLICSPECGLOSSMAP
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+            #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
+
+            #pragma shader_feature_local_fragment _SPECGLOSSMAP
+
+            #include "../../../ShaderLibrary/Template/CustomLitInput.hlsl"
+            #include "../../../ShaderLibrary/Template/CustomLitMetaPass.hlsl"
+
+            ENDHLSL
+        }
     }
 
     FallBack "Hidden/Universal Render Pipeline/FallbackError"
-    CustomEditor "ZoroiscryingUnityShaderLibrary.Editor.CustomBasicDissolveShaderGui"
+    CustomEditor "ZoroiscryingUnityShaderLibrary.Editor.LitVersatileShaderGUI"
 }

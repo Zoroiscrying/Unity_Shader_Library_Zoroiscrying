@@ -45,7 +45,7 @@ public class ChildTransformOrganizer : MonoBehaviour
         childTransforms.Remove(transform);
         if (affectOnlyTheChildrenOneLevelDown)
         {
-            for (int i = 0; i < childTransforms.Count; i++)
+            for (int i = childTransforms.Count-1; i > 0; i--)
             {
                 if (childTransforms[i].parent != this.transform)
                 {

@@ -83,6 +83,19 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.MaterialBinder
             ApplyMaterialBlockChange();
         }
 
+        public void RemoveBinderProperty(IMaterialPropertyBlockApplicable binderPropertyToRemove)
+        {
+            if (_bindableComponents.Contains(binderPropertyToRemove))
+            {
+                _bindableComponents.Remove(binderPropertyToRemove);
+            }
+        }
+
+        public void AddNewBinderProperty(IMaterialPropertyBlockApplicable newBinderProperty)
+        {
+            _bindableComponents.Add(newBinderProperty);
+        }
+
         public void ApplyMaterialBlockChange()
         {
             //ComponentRenderer.GetPropertyBlock(_matPropertyBlock);

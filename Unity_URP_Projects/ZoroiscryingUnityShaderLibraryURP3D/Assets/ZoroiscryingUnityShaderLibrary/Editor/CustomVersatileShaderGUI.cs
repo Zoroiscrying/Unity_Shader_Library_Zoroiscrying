@@ -11,10 +11,9 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
     {
         protected List<MaterialPropertyNamePair> materialPropertyNamePairs = new List<MaterialPropertyNamePair>();
         protected List<MatPropEditorItem> editorPropertyNames = new List<MatPropEditorItem>();
-        
+        protected bool expanded = true;
         readonly MaterialHeaderScopeList m_customMatScopeList = new MaterialHeaderScopeList(uint.MaxValue);
 
-        
         [Flags]
         protected enum CustomExpandable
         {
@@ -90,20 +89,38 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
                     {
                         editorPropertyNames.RemoveAt(editorPropertyNames.Count - 1);
                     }
-                }
-                
-                EditorGUI.indentLevel += 1;
-                for (int i = 0; i < editorPropertyNames.Count; i++)
-                {
-                    var propertyName = editorPropertyNames[i];
-                    using (new EditorGUILayout.HorizontalScope())
+
+                    if (expanded)
                     {
-                        GUILayout.Label("--Item: " + i.ToString(), EditorStyles.boldLabel ,GUILayout.MaxWidth(60)); 
-                        editorPropertyNames[i].drawType = ((DrawType)EditorGUILayout.EnumPopup("Draw Type", propertyName.drawType));  
+                        if (GUILayout.Button("Collapse", GUILayout.MaxWidth(60)))
+                        {
+                            expanded = false;
+                        }   
                     }
-                    editorPropertyNames[i].propertyName = (EditorGUILayout.TextField("Property Name", propertyName.propertyName));
+                    else
+                    {
+                        if (GUILayout.Button("Expand", GUILayout.MaxWidth(60)))
+                        {
+                            expanded = true;
+                        }   
+                    }
                 }
-                EditorGUI.indentLevel -= 1;
+
+                if (expanded)
+                {
+                    EditorGUI.indentLevel += 1;
+                    for (int i = 0; i < editorPropertyNames.Count; i++)
+                    {
+                        var propertyName = editorPropertyNames[i];
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            GUILayout.Label("--Item: " + i.ToString(), EditorStyles.boldLabel ,GUILayout.MaxWidth(60)); 
+                            editorPropertyNames[i].drawType = ((DrawType)EditorGUILayout.EnumPopup("Draw Type", propertyName.drawType));  
+                        }
+                        editorPropertyNames[i].propertyName = (EditorGUILayout.TextField("Property Name", propertyName.propertyName));
+                    }
+                    EditorGUI.indentLevel -= 1;   
+                }
             }
 
             if (EditorGUI.EndChangeCheck())
@@ -117,11 +134,11 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
             DrawEditorPropertyNames();
             foreach (var materialPropertyNamePair in materialPropertyNamePairs)
             {
-                DrawMaterialPropertyNamePair(materialPropertyNamePair);
+                DrawMaterialPropertyNamePair(materialPropertyNamePair, material);
             }
         }
 
-        protected void DrawMaterialPropertyNamePair(MaterialPropertyNamePair propertyNamePair)
+        protected void DrawMaterialPropertyNamePair(MaterialPropertyNamePair propertyNamePair, Material mat)
         {
             switch (propertyNamePair.drawType)
             {
@@ -141,6 +158,11 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
                 case DrawType.EditorHeader:
                     GUILayout.Label(propertyNamePair.propertyName, EditorStyles.helpBox);
                     break;
+                case DrawType.CheckKeywordEnabledOrNot:
+                    bool Keywordenabled = mat.IsKeywordEnabled(propertyNamePair.propertyName);
+                    string text = Keywordenabled ? "ENABLED!" : "NOT ENABLED";
+                    GUILayout.Label("  Keyword: " + propertyNamePair.propertyName + " ---- " + text, EditorStyles.helpBox);
+                    break;
                 default:
                     break;
             }
@@ -152,7 +174,9 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
             foreach (var propertyName in editorPropertyNames)
             {
                 var materialProperty = FindProperty(propertyName.propertyName, properties, false);
-                if (materialProperty != null)
+                if (propertyName.drawType == DrawType.CheckKeywordEnabledOrNot ||
+                    propertyName.drawType == DrawType.EditorHeader||
+                    materialProperty != null)
                 {
                     materialPropertyNamePairs.Add(new MaterialPropertyNamePair(materialProperty, propertyName.propertyName,
                         propertyName.drawType));   
@@ -170,6 +194,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
             var key = GetKey(mat);
             if (PlayerPrefs.HasKey(key))
             {
+                expanded = PlayerPrefs.GetInt(key + "expanded") == 1;
                 editorPropertyNames.Clear();   
                 var keyItemNumber = key + "itemNum";
                 int itemNumber = PlayerPrefs.GetInt(keyItemNumber);
@@ -200,6 +225,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
                 PlayerPrefs.SetInt(key + "drawType" + i, (int)editorPropertyNames[i].drawType);
             }
             PlayerPrefs.SetInt(key, 1);
+            PlayerPrefs.SetInt(key + "expanded", expanded ? 1 : 0);
         }
     }
 }

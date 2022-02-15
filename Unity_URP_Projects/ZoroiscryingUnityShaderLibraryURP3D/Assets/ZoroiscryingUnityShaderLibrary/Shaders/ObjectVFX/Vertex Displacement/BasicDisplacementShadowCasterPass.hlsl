@@ -11,11 +11,19 @@
 float3 _LightDirection;
 float3 _LightPosition;
 
+// Inputs of Displacement Shader
+float4 _DisplacementDirection;
+float4 _DisplacementAmplitude;
+half _SampleFrequency;
+half _SampleSpeed;
+
+
 struct Attributes
 {
     float4 positionOS   : POSITION;
     float3 normalOS     : NORMAL;
     float2 texcoord     : TEXCOORD0;
+    float4 tangentOS    : TANGENT;
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -51,7 +59,36 @@ Varyings ShadowPassVertex(Attributes input)
 {
     Varyings output;
     UNITY_SETUP_INSTANCE_ID(input);
-    float displaceVector = ApplySinVertexDisplacementOS(input.positionOS.xyz, float3(1,0,0), float3(0,0,0.05), 1.0, 50.0);
+    #if _SAMPLE_SINE
+    
+    float displaceVector = ApplySinVertexDisplacement_VectorDotProjection(
+        input.positionOS.xyz, _DisplacementDirection, _DisplacementAmplitude, _SampleFrequency, _SampleSpeed);
+    
+    #elif _SAMPLE_NOISE
+
+    float displaceVector = ApplyValueNoiseVertexDisplacement_VectorDotProjection(
+    input.positionOS.xyz, _DisplacementDirection, _DisplacementAmplitude, _SampleFrequency, _SampleSpeed);
+
+    #elif _SAMPLE_OTHER
+
+    //VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+    //// normalWS and tangentWS already normalize.
+    //// this is required to avoid skewing the direction during interpolation
+    //// also required for per-vertex lighting and SH evaluation
+    //VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+    //half3 viewDirWS = GetWorldSpaceNormalizeViewDir(vertexInput.positionWS);
+    //float displaceVector = ApplyValueNoiseVertexDisplacement_SweepProjection(
+    //vertexInput.positionWS.xyz,
+    //normalInput.normalWS, viewDirWS,
+    //input.positionOS.xyz, float3(0, 0, 1),
+    //float2(0.0, 0.01) + frac(_Time.x * 5.0) * 2, 0.5f,
+    // normalize(normalInput.normalWS) * 1.0 * step(dot(viewDirWS, half3(-1, 0, 0)), 0),
+    //_SampleFrequency, _SampleSpeed);
+    //input.positionOS.xyz = TransformWorldToObject(vertexInput.positionWS);
+    //vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+    #endif
+
+    
     output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
     output.positionCS = GetShadowPositionHClip(input);
     return output;

@@ -1,5 +1,5 @@
-﻿#ifndef BASIC_DISPLACEMENT_PASS
-#define BASIC_DISPLACEMENT_PASS
+﻿#ifndef ADVANCED_DISPLACEMENT_PASS
+#define ADVANCED_DISPLACEMENT_PASS
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "Assets/ZoroiscryingUnityShaderLibrary/ShaderLibrary/CustomNoise.hlsl"
@@ -22,6 +22,7 @@ half _SampleSpeed;
 half _DisplaceColorBlendStrength;
 float _DisplaceStrengthPower;
 half4 _DisplaceColor;
+TEXTURE2D(_DisplaceColorRamp);        SAMPLER(sampler_DisplaceColorRamp);
 
 // keep this file in sync with LitGBufferPass.hlsl
 
@@ -64,7 +65,8 @@ struct Varyings
 #endif
 
     float4 positionCS               : SV_POSITION;
-    float displacementStrength : TEXCOORD10; 
+    float displacementStrength : TEXCOORD10;
+    float3 originalPositionWS : TEXCOORD11;
     
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -136,8 +138,35 @@ Varyings LitPassVertex(Attributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+    output.originalPositionWS = TransformObjectToWorld(input.positionOS.xyz);
+
+    float3 originalPositionWS = output.originalPositionWS;
+    float3 originalNormalWS = TransformObjectToWorldNormal(input.normalOS);
+    //VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+
+    float displacementStrength = 0.0;
+    float3 displacementAmplitude = originalNormalWS * _DisplacementAmplitude * (1 - abs(dot(output.normalWS, float3(0, 1, 0))));
+    float3 displacementDirection = float3(-0.5 * value_noise11(originalPositionWS.y * 0.5 + _Time.x * 1.0), 1, 0.2);
+
+    #if _SAMPLE_SINE
+    
+    displacementStrength = ApplySinVertexDisplacement_VectorDotProjection(
+        originalPositionWS, displacementDirection, displacementAmplitude, _SampleFrequency, _SampleSpeed);
+    //originalPositionWS += float3(1,0,0);
+    
+    #elif _SAMPLE_NOISE
+
+    displacementStrength = ApplyGradientNoiseVertexDisplacement_VectorDotProjection_Test(
+        originalPositionWS, originalNormalWS, displacementDirection, displacementAmplitude, _SampleFrequency, _SampleSpeed);
+
+    #endif
+    
+    // Re update the value after the tweak
+    input.positionOS.xyz = TransformWorldToObject(originalPositionWS);
     
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+
     // normalWS and tangentWS already normalize.
     // this is required to avoid skewing the direction during interpolation
     // also required for per-vertex lighting and SH evaluation
@@ -148,42 +177,10 @@ Varyings LitPassVertex(Attributes input)
     real sign = input.tangentOS.w * GetOddNegativeScale();
     half4 tangentWS = half4(normalInput.tangentWS.xyz, sign);
     output.tangentWS = tangentWS;
-    
-    half3 viewDirWS = GetWorldSpaceNormalizeViewDir(vertexInput.positionWS);
     //half3 viewDirTS = GetViewDirectionTangentSpace(tangentWS, output.normalWS, viewDirWS);
     //output.viewDirTS = viewDirTS;
-
-    float displacementStrength = 0.0;
-
-    #if _SAMPLE_SINE
     
-    displacementStrength = ApplySinVertexDisplacement_VectorDotProjection(
-        input.positionOS.xyz, _DisplacementDirection, _DisplacementAmplitude, _SampleFrequency, _SampleSpeed);
-    
-    #elif _SAMPLE_NOISE
-
-    displacementStrength = ApplyValueNoiseVertexDisplacement_VectorDotProjection(
-    input.positionOS.xyz, _DisplacementDirection, _DisplacementAmplitude, _SampleFrequency, _SampleSpeed);
-
-    #elif _SAMPLE_OTHER
-    float fresnel = 1 - dot(normalInput.normalWS, viewDirWS);
-    
-    displacementStrength = ApplyValueNoiseVertexDisplacement_SweepProjection(
-    vertexInput.positionWS.xyz,
-    normalInput.normalWS, viewDirWS,
-    input.positionOS.xyz, float3(0, 0, 1),
-    float2(0.0, 0.02) + frac(_Time.x * 15.0) * 2, 0.0f,
-    normalize(normalInput.normalWS) * 0.25 * fresnel,
-    _SampleFrequency, _SampleSpeed);
-    input.positionOS.xyz = TransformWorldToObject(vertexInput.positionWS);
-
-    #elif _SAMPLE_UNSTABLE_ENERGY
-
-    displacementStrength = ApplyValueNoiseVertexDisplacement_1DNoiseProjection(input.positionOS.xyz, _Time.x, input.normalOS * _DisplacementAmplitude, _SampleFrequency, _SampleSpeed);
-    
-    #endif
-    // Re update the value after the tweak
-    vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+    half3 viewDirWS = GetWorldSpaceNormalizeViewDir(vertexInput.positionWS);
 
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
 
@@ -222,6 +219,8 @@ half4 LitPassFragment(Varyings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
     float emissionFactor = 0;
+    float3 displacementAmplitude = input.normalWS * _DisplacementAmplitude * (1 - abs(dot(input.normalWS, float3(0,1,0))));
+    float3 displacementDirection = float3(-0.5 * value_noise11(input.originalPositionWS.y * 0.5 + _Time.x * 1.0), 1, 0.2);
     
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     //clip(dissolveFactor);
@@ -238,7 +237,6 @@ half4 LitPassFragment(Varyings input) : SV_Target
 
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(input.uv, surfaceData);
-    surfaceData.emission += _DisplaceColor.xyz * pow(clamp(input.displacementStrength, 0.01, 1.0), _DisplaceStrengthPower) * _DisplaceColorBlendStrength;
     
     InputData inputData;
     InitializeInputData(input, surfaceData.normalTS, inputData);
@@ -247,11 +245,22 @@ half4 LitPassFragment(Varyings input) : SV_Target
 #ifdef _DBUFFER
     ApplyDecalToSurfaceData(input.positionCS, surfaceData, inputData);
 #endif
+    
+    //float3 positionWS = TransformObjectToWorld(input.originalPositionWS);
+    float displacementStrength = ApplyGradientNoiseVertexDisplacement_VectorDotProjection_Test(
+        input.originalPositionWS, input.normalWS, displacementDirection, displacementAmplitude, _SampleFrequency, _SampleSpeed);
+    surfaceData.emission += _DisplaceColor.xyz * pow(clamp(displacementStrength, 0.01, 1.0), _DisplaceStrengthPower) * _DisplaceColorBlendStrength;
 
-    half4 color = UniversalFragmentPBR(inputData, surfaceData);
-
-    color.rgb = MixFog(color.rgb, inputData.fogCoord);
-    color.a = OutputAlpha(color.a, _Surface);
+    surfaceData.albedo = lerp(surfaceData.albedo, _DisplaceColor.xyz, pow(clamp(displacementStrength, 0.01, 1.0), _DisplaceStrengthPower) * _DisplaceColorBlendStrength);
+    surfaceData.albedo = 0;
+    surfaceData.emission = SAMPLE_TEXTURE2D(_DisplaceColorRamp, sampler_DisplaceColorRamp, float2(displacementStrength ,0)).xyz * 4;
+    
+    //half4 color = UniversalFragmentPBR(inputData, surfaceData);
+    half4 color = half4(1,1,1,1);
+    color.rgb = surfaceData.albedo + surfaceData.emission;
+    
+    //color.rgb = MixFog(color.rgb, inputData.fogCoord);
+    //color.a = OutputAlpha(color.a, _Surface);
     
     return color;
 }

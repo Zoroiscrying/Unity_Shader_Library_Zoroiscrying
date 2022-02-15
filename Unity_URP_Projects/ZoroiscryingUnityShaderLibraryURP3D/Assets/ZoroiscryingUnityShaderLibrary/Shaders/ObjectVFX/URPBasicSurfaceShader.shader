@@ -42,6 +42,13 @@ Shader "Custom/Template/BasicSurface"
         [Normal] _DetailNormalMap("Normal Map", 2D) = "bump" {}
 
         // Blending state
+        _Surface("__surface", Float) = 0.0
+        _Blend("__blend", Float) = 0.0
+        _Cull("__cull", Float) = 2.0
+        [ToggleUI] _AlphaClip("__clip", Float) = 0.0
+        [HideInInspector] _SrcBlend("__src", Float) = 1.0
+        [HideInInspector] _DstBlend("__dst", Float) = 0.0
+        [HideInInspector] _ZWrite("__zw", Float) = 1.0
 
         [ToggleUI] _ReceiveShadows("Receive Shadows", Float) = 1.0
         // Editmode props
@@ -75,8 +82,8 @@ Shader "Custom/Template/BasicSurface"
             Name "ForwardLit"
             Tags{"LightMode" = "UniversalForward"}
 
-            //Blend[_SrcBlend][_DstBlend]
-            //ZWrite[_ZWrite]
+            Blend[_SrcBlend][_DstBlend]
+            ZWrite[_ZWrite]
             Cull BACK
 
             HLSLPROGRAM

@@ -40,7 +40,7 @@ float2 value_noise21(float x)
 }
 
 // Modified value noise 31 for outputting 2D vectors
-float2 value_noise31(float x)
+float3 value_noise31(float x)
 {
 	float i = floor(x);
 	float f = frac(x);

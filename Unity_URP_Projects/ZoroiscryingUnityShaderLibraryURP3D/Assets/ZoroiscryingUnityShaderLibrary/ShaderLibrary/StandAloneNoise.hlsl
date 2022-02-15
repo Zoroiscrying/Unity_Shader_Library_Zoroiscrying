@@ -1,5 +1,5 @@
-﻿#ifndef STAND_ALONG_NOISE
-#define STAND_ALONG_NOISE
+﻿#ifndef STAND_ALONE_NOISE
+#define STAND_ALONE_NOISE
 
 // Hash without sine: https://www.shadertoy.com/view/4djSRW
 // MIT License Copyright (c)2014 David Hoskins.
