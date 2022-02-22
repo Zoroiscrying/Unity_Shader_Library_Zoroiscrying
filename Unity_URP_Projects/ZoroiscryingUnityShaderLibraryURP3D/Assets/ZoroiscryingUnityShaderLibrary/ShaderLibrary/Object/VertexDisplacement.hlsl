@@ -2,6 +2,7 @@
 #define VERTEX_DISPLACEMENT_INCLUDED
 
 #include "Assets/ZoroiscryingUnityShaderLibrary/ShaderLibrary/CustomNoise.hlsl"
+#include "Assets/ZoroiscryingUnityShaderLibrary/ShaderLibrary/Mapping/Math.hlsl"
 
 // Sine wave displacements
 float ApplySinVertexDisplacement_VectorDotProjection(inout float3 position, float3 displacementDirection, float3 displacementAmplitude, half frequency, half timeScale)
@@ -35,11 +36,6 @@ float ApplyValueNoiseVertexDisplacement_VectorDotProjection(inout float3 positio
     float displaceStrength = value_noise11(displaceVector * frequency + _Time.x * timeScale);
     position += displaceStrength * displacementAmplitude;
     return length(displaceStrength);
-}
-
-float Remap(float In, float2 InMinMax, float2 OutMinMax)
-{
-    return OutMinMax.x + (In - InMinMax.x) * (OutMinMax.y - OutMinMax.x) / (InMinMax.y - InMinMax.x);
 }
 
 float ApplyGradientNoiseVertexDisplacement_VectorDotProjection(inout float3 position, float3 displacementDirection, float3 displacementAmplitude, half frequency, half timeScale)

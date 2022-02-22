@@ -173,6 +173,11 @@ float value_noise13( in float3 x )
 }
 #endif
 
+// 2D output 2D input noise
+float2 custom_value_noise22(in float2 p)
+{
+	return float2(value_noise12(p), value_noise12(p + float2(928, 1785)));
+}
 
 
 #endif
