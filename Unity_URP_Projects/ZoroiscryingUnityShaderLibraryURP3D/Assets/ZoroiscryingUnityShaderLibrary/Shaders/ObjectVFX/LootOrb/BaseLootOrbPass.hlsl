@@ -189,6 +189,8 @@ half4 UnlitPassFragment(Varyings input) : SV_Target
                 input.uv * _GlitterNoiseControl.xy).xyz
             , _Time.y * .3) - 0.5);
     float screenSpaceGlitterStrength = saturate(dot(1 - viewDirWS, glitterDirection));
+    //screenSpaceGlitterStrength = pow(SAMPLE_TEXTURE2D(_GlitterNoiseTexture, sampler_GlitterNoiseTexture,
+    //            input.uv * _GlitterNoiseControl.xy + _Time.xx * float2(0.05, 0)).x, 6);
     
 // -- Fresnel Emission
     _FresnelParameters.y += value_noise11((builtUV.x - builtUV.y) * 6 + _Time.y * 2) * _FresnelParameters.w;

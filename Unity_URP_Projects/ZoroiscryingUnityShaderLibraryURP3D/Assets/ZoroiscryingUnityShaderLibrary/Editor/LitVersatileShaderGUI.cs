@@ -414,7 +414,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
         {
             base.DrawSurfaceInputs(material);
             Inputs(litProperties, materialEditor, material);
-            DrawEmissionProperties(material, true);
+            //DrawEmissionProperties(material, true);
             DrawTileOffset(materialEditor, baseMapProp);
         }
 
