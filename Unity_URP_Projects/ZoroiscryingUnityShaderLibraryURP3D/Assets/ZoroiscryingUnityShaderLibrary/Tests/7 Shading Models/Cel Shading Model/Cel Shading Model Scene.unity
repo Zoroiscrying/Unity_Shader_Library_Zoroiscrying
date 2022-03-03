@@ -522,7 +522,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e1bdf5eac890c1944a2ffdd8f9e4776f, type: 2}
+  - {fileID: 2100000, guid: bd8cc8ac6757db348904753fa867d2d8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -619,7 +619,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 55b669644716041439aa4aa4ffb3a437, type: 2}
+  - {fileID: 2100000, guid: 662983f3e9f4abc40a3b2965d6ace2c2, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -788,14 +788,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 590298154}
-  m_LocalRotation: {x: -0.4420114, y: 0.66185814, z: -0.09890555, w: -0.5973169}
+  m_LocalRotation: {x: 0.4493789, y: -0.420339, z: -0.05670034, w: 0.78623074}
   m_LocalPosition: {x: 10.827, y: 1.335, z: -4.986}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 41.221, y: 5289.22, z: -38.374}
+  m_LocalEulerAnglesHint: {x: 41.221, y: 4968.828, z: -38.374}
 --- !u!114 &590298157
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -911,9 +911,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1156634359}
   - {fileID: 838113620}
   - {fileID: 1610457140}
+  - {fileID: 1156634359}
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1762,7 +1762,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: ecfe42c7ee9213544a6c0c6ab034910e, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 3c4c0962d2d34814588d4bc4be6c6106, type: 2}
+      objectReference: {fileID: 2100000, guid: ee4b3c5a74ece91448d47fd0b2567050, type: 2}
     - target: {fileID: 919132149155446097, guid: ecfe42c7ee9213544a6c0c6ab034910e, type: 3}
       propertyPath: m_Name
       value: Cel_PBR_Marble
@@ -1792,7 +1792,7 @@ MeshCollider:
   m_GameObject: {fileID: 1305902622}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 4
   m_Convex: 1
   m_CookingOptions: 30
@@ -2316,7 +2316,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d95b3e065d282354282fde08101cc1fe, type: 2}
+  - {fileID: 2100000, guid: 602a6577082e75742869fd54392d38d6, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
