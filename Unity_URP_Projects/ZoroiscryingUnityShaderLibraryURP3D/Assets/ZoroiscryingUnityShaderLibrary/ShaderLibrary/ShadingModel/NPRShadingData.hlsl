@@ -18,6 +18,10 @@ struct NPRShadingData
     half SpecularLightCutOff;
     half SpecularBandNumber;
     half SpecularEdgeSmoothness;
+    half SpecularStrengthMultiplier;
+
+    half3 SpecularColor;
+    half3 ShadowColor;
     
     half3 RimLightColor;
     half RimLightSize;

@@ -107,7 +107,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DiffuseBandNumber: 3.27
     - _DiffuseEdgeSmoothness: 0.112
-    - _DiffuseLightCutOff: 0.554
+    - _DiffuseLightCutOff: 0.483
     - _DiffuseShadeMode: 3
     - _DstBlend: 0
     - _EnvironmentReflections: 1
@@ -121,13 +121,14 @@ Material:
     - _ReceiveShadows: 1
     - _RimLightThickness: 1
     - _SCREEN_SPACE_HALFTONE: 1
-    - _Smoothness: 0.698
+    - _Smoothness: 0.6
     - _SmoothnessTextureChannel: 0
     - _SpecularBandNumber: 1
     - _SpecularEdgeSmoothness: 0.05
     - _SpecularHighlights: 1
-    - _SpecularLightCutOff: 0.5
+    - _SpecularLightCutOff: 2.7
     - _SpecularShadeMode: 0
+    - _SpecularStrengthMultiplier: 26.4
     - _SrcBlend: 1
     - _Surface: 0
     - _WorkflowMode: 1
@@ -137,5 +138,7 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ShadowColor: {r: 1, g: 0, b: 0.8606558, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SpecularColor: {r: 0.19028097, g: 1, b: 0.07924521, a: 1}
   m_BuildTextureStacks: []

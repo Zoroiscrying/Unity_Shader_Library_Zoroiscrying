@@ -3,7 +3,7 @@ Shader "Custom/Template/BasicSurface"
     Properties
     {
         // Specular vs Metallic workflow
-        //_WorkflowMode("WorkflowMode", Float) = 1.0
+        _WorkflowMode("WorkflowMode", Float) = 1.0
 
         [MainTexture] _BaseMap("Albedo", 2D) = "white" {}
         [MainColor] _BaseColor("Color", Color) = (1,1,1,1)

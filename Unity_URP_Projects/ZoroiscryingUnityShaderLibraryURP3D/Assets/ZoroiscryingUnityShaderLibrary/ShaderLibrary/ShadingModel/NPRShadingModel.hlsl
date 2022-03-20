@@ -15,16 +15,22 @@ inline void InitializeShadingData(out NPRShadingData nprShadingData)
 
 inline void InitializeShadingData(
     half diffuseLightCutoff, half specularLightCutoff, half diffuseBandNumber, half specularBandNumber,
-    half diffuseEdgeSmoothness, half specularEdgeSmoothness,
+    half diffuseEdgeSmoothness, half specularEdgeSmoothness, half specularStrengthMultiplier,
     half rimLightSize, half3 rimLightColor, half halfToneValue,
+    half3 specularColor, half3 shadowColor,
     out NPRShadingData nprShadingData)
 {
     nprShadingData.DiffuseBandNumber = max(floor(diffuseBandNumber), 1);
     nprShadingData.DiffuseEdgeSmoothness = diffuseEdgeSmoothness;
     nprShadingData.SpecularBandNumber = max(floor(specularBandNumber), 1);
     nprShadingData.SpecularEdgeSmoothness = specularEdgeSmoothness;
+    nprShadingData.SpecularStrengthMultiplier = specularStrengthMultiplier;
     nprShadingData.DiffuseLightCutOff = diffuseLightCutoff;
     nprShadingData.SpecularLightCutOff = specularLightCutoff;
+
+    nprShadingData.SpecularColor = specularColor;
+    nprShadingData.ShadowColor = shadowColor;
+    
     nprShadingData.RimLightColor = rimLightSize;
     nprShadingData.RimLightSize = rimLightColor;
     nprShadingData.HalfToneValue = halfToneValue;
@@ -37,7 +43,7 @@ inline void InitializeShadingOutlineData(half outlineSize, out NPRShadingOutline
 }
 
 half3 LightingPhysicallyBased_NPR(BRDFData brdfData, BRDFData brdfDataClearCoat,
-    half3 lightColor, half3 lightDirectionWS, half lightAttenuation,
+    half3 lightColor, half3 lightDirectionWS, half lightDistAttenuation, half lightShadowAttenuation,
     half3 normalWS, half3 viewDirectionWS,
     half clearCoatMask, bool specularHighlightsOff, NPRShadingData nprShadingData)
 {
@@ -55,13 +61,15 @@ half3 LightingPhysicallyBased_NPR(BRDFData brdfData, BRDFData brdfDataClearCoat,
 #elif _DIFFUSESHADEMODE_HALFTONE
     nprNdotL = smoothstep(nprShadingData.HalfToneValue - 0.01, nprShadingData.HalfToneValue + 0.01, NdotL);
 #endif
-    
+
+    half lightAttenuation = lightDistAttenuation * lightShadowAttenuation;
     half3 radiance = lightColor * (lightAttenuation * nprNdotL);
-    half3 brdf = brdfData.diffuse;
+    half3 brdf = brdfData.diffuse * lightColor * lightDistAttenuation * lerp(nprShadingData.ShadowColor, 1.0, nprNdotL * lightShadowAttenuation);
     
 #ifndef _SPECULARHIGHLIGHTS_OFF
     [branch] if (!specularHighlightsOff)
     {
+        // modified to fit the 0-1 range as much as possible
         half specularStrength = DirectBRDFSpecular(brdfData, normalWS, lightDirectionWS, viewDirectionWS);
         half nprSpecularStrength = 1.0;
         #if _SPECULARSHADEMODE_SHARP
@@ -78,7 +86,7 @@ half3 LightingPhysicallyBased_NPR(BRDFData brdfData, BRDFData brdfDataClearCoat,
             smoothstep(nprShadingData.HalfToneValue - 0.01, nprShadingData.HalfToneValue + 0.01, specularStrength);
         #endif
         
-        brdf += brdfData.specular * nprSpecularStrength;
+        brdf += brdfData.specular * nprSpecularStrength * nprShadingData.SpecularStrengthMultiplier * _SpecularColor * radiance;
 
 #if defined(_CLEARCOAT) || defined(_CLEARCOATMAP)
         // Clear coat evaluates the specular a second timw and has some common terms with the base specular.
@@ -99,12 +107,12 @@ half3 LightingPhysicallyBased_NPR(BRDFData brdfData, BRDFData brdfDataClearCoat,
             // It is matching fresnel used in the GI/Env, so should produce a consistent clear coat blend (env vs. direct)
             half coatFresnel = kDielectricSpec.x + kDielectricSpec.a * Pow4(1.0 - NoV);
 
-        brdf = brdf * (1.0 - clearCoatMask * coatFresnel) + brdfCoat * clearCoatMask;
+        brdf = brdf * (1.0 - clearCoatMask * coatFresnel) + brdfCoat * clearCoatMask * radiance;
 #endif // _CLEARCOAT
     }
 #endif // _SPECULARHIGHLIGHTS_OFF
 
-    return brdf * radiance;
+    return brdf;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -150,7 +158,7 @@ half4 CelShadingPBR(InputData inputData, SurfaceData surfaceData, NPRShadingData
     if (IsMatchingLightLayer(mainLight.layerMask, meshRenderingLayers))
     {
         lightingData.mainLightColor = LightingPhysicallyBased_NPR(brdfData, brdfDataClearCoat,
-                                                              mainLight.color, mainLight.direction, mainLight.distanceAttenuation * mainLight.shadowAttenuation,
+                                                              mainLight.color, mainLight.direction, mainLight.distanceAttenuation, mainLight.shadowAttenuation,
                                                               inputData.normalWS, inputData.viewDirectionWS,
                                                               surfaceData.clearCoatMask, specularHighlightsOff, nprShadingData);
     }
@@ -166,7 +174,7 @@ half4 CelShadingPBR(InputData inputData, SurfaceData surfaceData, NPRShadingData
         if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
         {
             lightingData.additionalLightsColor += LightingPhysicallyBased_NPR(brdfData, brdfDataClearCoat,
-                                                              light.color, light.direction, light.distanceAttenuation * light.shadowAttenuation,
+                                                              light.color, light.direction, light.distanceAttenuation, light.shadowAttenuation,
                                                               inputData.normalWS, inputData.viewDirectionWS,
                                                               surfaceData.clearCoatMask, specularHighlightsOff, nprShadingData);
         }
@@ -179,7 +187,7 @@ half4 CelShadingPBR(InputData inputData, SurfaceData surfaceData, NPRShadingData
         if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
         {
             lightingData.additionalLightsColor += LightingPhysicallyBased_NPR(brdfData, brdfDataClearCoat,
-                                                              light.color, light.direction, light.distanceAttenuation * light.shadowAttenuation,
+                                                              light.color, light.direction, light.distanceAttenuation, light.shadowAttenuation,
                                                               inputData.normalWS, inputData.viewDirectionWS,
                                                               surfaceData.clearCoatMask, specularHighlightsOff, nprShadingData);
         }

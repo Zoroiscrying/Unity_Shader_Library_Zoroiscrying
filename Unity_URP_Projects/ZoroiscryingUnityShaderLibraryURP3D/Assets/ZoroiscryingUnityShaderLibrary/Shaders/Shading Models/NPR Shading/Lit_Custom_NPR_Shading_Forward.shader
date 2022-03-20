@@ -67,8 +67,12 @@ Shader "Custom/Shading Model/Lit_Base_NPR_Shading_Forward"
         _SpecularEdgeSmoothness("SpecularLightSmoothness", Range(0.0, 0.5)) = 0.05
         _DiffuseLightCutOff("Diffuse Light Cutoff", Range(0.0, 1.0)) = 0.5
         _DiffuseBandNumber("Diffuse Band Number", Range(1, 8)) = 1
-        _SpecularLightCutOff("Specular Light Cutoff", Range(0.0, 1.0)) = 0.5
+        _SpecularLightCutOff("Specular Light Cutoff", Range(0.0, 32.0)) = 0.5
         _SpecularBandNumber("Specular Band Number", Range(1, 8)) = 1
+        _SpecularStrengthMultiplier("Specular Strength Multiplier", Range(0.1, 32)) = 1.0
+        
+        _SpecularColor("Specular Color Multiplier", Color) = (1,1,1,1)
+        _ShadowColor("Shadow Color Multiplier", Color) = (0,0,0,1)
         
         // - Rim Light
         _RimLightThickness("Rim Light Thickness", Range(0.1, 32.0)) = 1.0

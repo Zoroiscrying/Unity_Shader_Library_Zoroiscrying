@@ -36,6 +36,9 @@ half _DiffuseBandNumber;
 half _SpecularBandNumber;
 half _DiffuseEdgeSmoothness;
 half _SpecularEdgeSmoothness;
+half _SpecularStrengthMultiplier;
+half4 _SpecularColor;
+half4 _ShadowColor;
 //
 float4 _HalfToneTexture_ST;
 CBUFFER_END

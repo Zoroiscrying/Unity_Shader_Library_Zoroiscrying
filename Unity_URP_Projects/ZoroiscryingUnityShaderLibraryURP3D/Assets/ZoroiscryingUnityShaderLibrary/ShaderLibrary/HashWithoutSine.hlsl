@@ -43,6 +43,11 @@ float hash12(float2 p)
     return frac((p3.x + p3.y) * p3.z);
 }
 
+float random12(float2 p)
+{
+    return frac(sin(dot(p, real2(41, 289)))*45758.5453 ); 
+}
+
 //----------------------------------------------------------------------------------------
 //  1 out, 3 in...
 float hash13(float3 p3)
