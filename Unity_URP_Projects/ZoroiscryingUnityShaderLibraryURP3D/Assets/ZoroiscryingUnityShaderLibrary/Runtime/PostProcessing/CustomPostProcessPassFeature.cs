@@ -24,6 +24,7 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
         private AnimateSpeedLine m_animateSpeedLine;
         private ImageBasedOutline m_imageBasedOutline;
         private DepthNormalsOutline m_depthNormalsOutline;
+        private PostProcessLightVolume m_postProcessLightVolume;
 
         MaterialLibrary m_Materials;
         
@@ -39,15 +40,14 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
             m_TemporaryColorTexture03.Init("_TemporaryColorTexture3");
         }
         
-        public void Setup(in RenderTextureDescriptor baseDescriptor, RenderPassEvent @event, RenderTargetIdentifier source, RenderTargetHandle destination)
+        public void Setup(in RenderTextureDescriptor baseDescriptor, RenderPassEvent @event)
         {
             m_Descriptor = baseDescriptor;
             m_Descriptor.useMipMap = false;
             m_Descriptor.autoGenerateMips = false;
             renderPassEvent = @event;
-            m_ColorAttachment = source;
+            //m_ColorAttachment = source;
             //m_DepthAttachment = ;
-            m_Destination = destination;
         }
         
         // Here you can implement the rendering logic.
@@ -62,6 +62,7 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
             m_animateSpeedLine = stack.GetComponent<AnimateSpeedLine>();
             m_imageBasedOutline = stack.GetComponent<ImageBasedOutline>();
             m_depthNormalsOutline = stack.GetComponent<DepthNormalsOutline>();
+            m_postProcessLightVolume = stack.GetComponent<PostProcessLightVolume>();
             var cmd = CommandBufferPool.Get(k_RenderPostProcessingTag);
             cmd.Clear();
 
@@ -114,6 +115,12 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
             if (m_depthNormalsOutline.IsActive())
             {
                 SetupDepthNormalsOutline(cmd, ref renderingData, m_Materials.DepthNormalsOutline);
+            }
+
+            if (m_postProcessLightVolume.IsActive())
+            {
+                SetupPostProcessLightVolumeOutline(
+                    cmd, ref renderingData, m_Materials.PostProcessLightVolume, ref cameraData, m_Materials.GaussianBlur);
             }
         }
         
@@ -218,6 +225,54 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
             cmd.EndSample("Depth normals Outline");
         }
 
+        private void SetupPostProcessLightVolumeOutline(CommandBuffer cmd, ref RenderingData renderingData, 
+            Material material, ref CameraData cameraData, Material blurMaterial)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            cmd.BeginSample("PostProcessLightVolume");
+            var R18Descriptor =
+                new RenderTextureDescriptor(m_Descriptor.width/2, m_Descriptor.height/2, RenderTextureFormat.R16);
+            cmd.GetTemporaryRT(m_TemporaryColorTexture01.id, R18Descriptor, FilterMode.Bilinear);
+            cmd.GetTemporaryRT(m_TemporaryColorTexture02.id, R18Descriptor, FilterMode.Bilinear);
+            cmd.GetTemporaryRT(m_TemporaryColorTexture03.id, m_Descriptor, FilterMode.Bilinear);
+
+            material.SetColor(ShaderConstants.LightColor, m_postProcessLightVolume.lightColor.value);
+            material.SetFloat(ShaderConstants.Density, m_postProcessLightVolume.density.value);
+            material.SetFloat(ShaderConstants.Exposure, m_postProcessLightVolume.exposure.value);
+            material.SetFloat(ShaderConstants.Weight, m_postProcessLightVolume.weight.value);
+            material.SetFloat(ShaderConstants.Decay, m_postProcessLightVolume.decay.value);
+            
+            Vector3 sunDirectionWorldSpace = RenderSettings.sun.transform.forward;
+            Vector3 cameraPositionWorldSpace = cameraData.camera.transform.position; 
+            Vector3 sunPositionWorldSpace = cameraPositionWorldSpace + sunDirectionWorldSpace;
+            Vector3 sunPositionViewportSpace = cameraData.camera.WorldToViewportPoint(sunPositionWorldSpace);
+
+            material.SetVector("_MainLightPositionSS", sunPositionViewportSpace);
+
+            // Background Occluded texture generation
+            cmd.Blit(m_ColorAttachment, m_TemporaryColorTexture01.Identifier(), material, 1);
+            cmd.SetGlobalTexture("_BackgroundOccluded", m_TemporaryColorTexture01.Identifier());
+            // Occluded background Radial blur
+            cmd.Blit(m_ColorAttachment, m_TemporaryColorTexture02.Identifier(), material, 0);
+            // Bilateral blur with depth awareness
+            cmd.Blit(m_TemporaryColorTexture02.Identifier(), m_TemporaryColorTexture01.Identifier(), blurMaterial, 0);
+            cmd.Blit(m_TemporaryColorTexture01.Identifier(), m_TemporaryColorTexture02.Identifier(), blurMaterial, 1);
+            cmd.SetGlobalTexture("_VolumetricLightTexture", m_TemporaryColorTexture02.Identifier());
+            // Generate down sampled depth
+            cmd.Blit(m_ColorAttachment, m_TemporaryColorTexture01.Identifier(), material, 2);
+            cmd.SetGlobalTexture("_LowResDepth", m_TemporaryColorTexture01.Identifier());
+            
+            cmd.Blit(m_ColorAttachment, m_TemporaryColorTexture03.Identifier(), material, 3);
+            cmd.Blit(m_TemporaryColorTexture03.Identifier(), m_ColorAttachment);
+            //Blit(cmd, ref renderingData, material, 0);
+
+            cmd.EndSample("PostProcessLightVolume");
+        }
+
         
         
         // This method is called before executing the render pass.
@@ -227,7 +282,7 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
         // The render pipeline will ensure target setup and clearing happens in a performant manner.
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            
+            m_ColorAttachment = renderingData.cameraData.renderer.cameraColorTarget;
         }
 
         // Cleanup any allocated resources that were created during the execution of this render pass.
@@ -267,6 +322,12 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
         public static readonly int NormalsSensitivity = Shader.PropertyToID("_NormalsSensitivity");
         public static readonly int DepthSensitivity = Shader.PropertyToID("_DepthSensitivity");
         public static readonly int ColorSensitivity = Shader.PropertyToID("_ColorSensitivity");
+        // Post Processing Light Volume
+        public static readonly int LightColor = Shader.PropertyToID("_LightColor");
+        public static readonly int Density = Shader.PropertyToID("_Density");
+        public static readonly int Exposure = Shader.PropertyToID("_Exposure");
+        public static readonly int Weight = Shader.PropertyToID("_Weight");
+        public static readonly int Decay = Shader.PropertyToID("_Decay");
     }
 
     CustomRenderPass m_ScriptablePass;
@@ -287,9 +348,8 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
     {
         var cameraColorTarget = renderer.cameraColorTarget;
         //var cameraDepth = renderer.cameraDepthTarget;
-        var dest = RenderTargetHandle.CameraTarget;
         if (postProcessData == null) return;
-        m_ScriptablePass.Setup(renderingData.cameraData.cameraTargetDescriptor, m_ScriptablePass.renderPassEvent, cameraColorTarget, dest);
+        m_ScriptablePass.Setup(renderingData.cameraData.cameraTargetDescriptor, m_ScriptablePass.renderPassEvent);
         renderer.EnqueuePass(m_ScriptablePass);
     }
 }

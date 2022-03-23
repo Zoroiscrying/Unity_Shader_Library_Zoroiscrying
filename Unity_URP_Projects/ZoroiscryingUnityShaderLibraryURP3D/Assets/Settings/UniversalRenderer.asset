@@ -75,7 +75,7 @@ MonoBehaviour:
     scattering: -0.5
     steps: 16
     maxDistance: 50
-    jitter: 0
+    jitter: 50
     blurAmount: 100
     blurSamples: 7
 --- !u!114 &11400000

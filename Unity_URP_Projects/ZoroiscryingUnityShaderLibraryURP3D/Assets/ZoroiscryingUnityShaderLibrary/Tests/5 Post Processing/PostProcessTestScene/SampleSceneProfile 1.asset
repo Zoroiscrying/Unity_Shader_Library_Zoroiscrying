@@ -1,5 +1,33 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7650158186330058424
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bc93265e6cf475cbf565c903077cb46, type: 3}
+  m_Name: PostProcessLightVolume
+  m_EditorClassIdentifier: 
+  active: 0
+  exposure:
+    m_OverrideState: 1
+    m_Value: 0.8
+  density:
+    m_OverrideState: 1
+    m_Value: 1
+  decay:
+    m_OverrideState: 1
+    m_Value: 0.75
+  weight:
+    m_OverrideState: 1
+    m_Value: 0.25
+  lightColor:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 0.9320519, b: 0.56037736, a: 1}
 --- !u!114 &-4179492388291730111
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -111,7 +139,7 @@ MonoBehaviour:
     m_Value: 1
   hueShift:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 0.618
   invert:
     m_OverrideState: 1
     m_Value: 0
@@ -231,6 +259,7 @@ MonoBehaviour:
   - {fileID: -2539486317984260720}
   - {fileID: -4179492388291730111}
   - {fileID: -2225492794084194576}
+  - {fileID: -7650158186330058424}
 --- !u!114 &529620015655894522
 MonoBehaviour:
   m_ObjectHideFlags: 3

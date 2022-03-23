@@ -11,8 +11,10 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
         public readonly Material ImageBasedOutline;
 
         public readonly Material DepthNormalsOutline;
-        
-        
+
+        public readonly Material PostProcessLightVolume;
+
+        public readonly Material GaussianBlur;
 
         public MaterialLibrary(AdditionalPostProcessData data)
         {
@@ -21,6 +23,8 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
             AnimateLineMat = Load(data.shaders.animateLineShader);
             ImageBasedOutline = Load(data.shaders.imageBasedOutlineShader);
             DepthNormalsOutline = Load(data.shaders.depthNormalsOutlineShader);
+            PostProcessLightVolume = Load(data.shaders.postProcessLightVolumeShader);
+            GaussianBlur = Load(data.shaders.gaussianBlurDepthAwareness);
         }
 
         private Material Load(Shader shader)

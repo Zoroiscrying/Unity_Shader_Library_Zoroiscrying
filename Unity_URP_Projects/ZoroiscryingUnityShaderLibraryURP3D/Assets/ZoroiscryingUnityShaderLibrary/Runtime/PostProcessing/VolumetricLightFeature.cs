@@ -145,12 +145,6 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
                     // Up Sample and composite
                     Blit(cmd, colorBuffer, tempTexture3.Identifier(), settings.material, 2);
                     Blit(cmd, tempTexture3.Identifier(), colorBuffer);
-                    //cmd.Blit(source, tempTexture3.Identifier(), settings.material, 2);
-                    //cmd.Blit(tempTexture3.Identifier(), source);
-                    
-                    // Up Sample and composite
-                    //Blit(cmd, ref renderingData, settings.material, 2);
-                    //Blit(cmd, );
 
                     context.ExecuteCommandBuffer(cmd);
                 }
