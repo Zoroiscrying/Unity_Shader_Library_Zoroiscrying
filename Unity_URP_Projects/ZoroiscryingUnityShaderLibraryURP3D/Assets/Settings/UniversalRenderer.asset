@@ -65,7 +65,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b6b8ba74ef24170b367711fc47762bd, type: 3}
   m_Name: Volumetric Light
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
     material: {fileID: 0}
     blurMaterial: {fileID: 0}

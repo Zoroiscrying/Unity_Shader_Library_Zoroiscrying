@@ -37,7 +37,10 @@
             {
                 float2 uv = i.uv;
     #if UNITY_UV_STARTS_AT_TOP
-                uv.y = 1 - uv.y;
+            if (_MainTex_TexelSize.y < 0)
+            {
+                uv.y = 1 - uv.y;   
+            }
     #endif
                 
                 half4 c = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);

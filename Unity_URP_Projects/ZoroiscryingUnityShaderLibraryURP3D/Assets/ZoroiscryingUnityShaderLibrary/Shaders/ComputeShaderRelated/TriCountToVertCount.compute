@@ -1,0 +1,19 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+#include "Assets/ZoroiscryingUnityShaderLibrary/ShaderLibrary/ComputeUtility.hlsl"
+
+struct IndirectArgs
+{
+    uint numVerticesPerInstance;
+    uint numInstances;
+    uint startVertexIndex;
+    uint startInstanceIndex;
+};
+RWStructuredBuffer<IndirectArgs> _IndirectArgsBuffer;
+
+[numthreads(1, 1, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    _IndirectArgsBuffer[0].numVerticesPerInstance *= 3;
+}

@@ -1,0 +1,85 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSPyramidFace
+
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "Assets/ZoroiscryingUnityShaderLibrary/ShaderLibrary/ComputeUtility.hlsl"
+
+struct SourceVertex
+{
+    float3 positionOS;
+    float2 uv;
+};
+
+struct OutputVertex
+{
+    float3 positionWS;
+    float2 uv;
+};
+
+struct OutputTriangle
+{
+    float3 normalWS;
+    OutputVertex vertices[3];
+};
+
+// Resource Buffers
+StructuredBuffer<SourceVertex> _SourceVertices;
+StructuredBuffer<int> _SourceIndices;
+AppendStructuredBuffer<OutputTriangle> _OutputTriangles;
+
+// Bound parameters
+int _NumSourceTriangles;
+float _PyramidHeight;
+float _AnimationFrequency;
+float4x4 _Matrix_M;
+
+OutputVertex TransformSourceVertex(SourceVertex vertex)
+{
+    OutputVertex o;
+    o.positionWS = mul(_Matrix_M, float4(vertex.positionOS, 1)).xyz;
+    o.uv = vertex.uv;
+    return o;
+}
+
+void SetupAndOutputTriangle(OutputVertex v0, OutputVertex v1, OutputVertex v2)
+{
+    float3 normalWS = ComputeNormalFromTriangle(v0.positionWS, v1.positionWS, v2.positionWS);
+
+    // Create Draw Triangle and append to the buffer for future drawing in the CPU via DrawIndirect
+    OutputTriangle tri;
+    tri.normalWS = normalWS;
+    tri.vertices[0] = v0;
+    tri.vertices[1] = v1;
+    tri.vertices[2] = v2;
+
+    _OutputTriangles.Append(tri);
+}
+
+[numthreads(128, 1, 1)]
+void CSPyramidFace (uint3 id : SV_DispatchThreadID)
+{
+    // abort computing if all the source triangles are processed
+    if ((int)id.x > _NumSourceTriangles)
+    {
+        return;
+    }
+
+    // the id specifies the index of the current triangle, rather than the index of the current vertex
+    int triStart = id.x * 3;
+    OutputVertex inputs[3];
+    inputs[0] = TransformSourceVertex(_SourceVertices[_SourceIndices[triStart]]);
+    inputs[1] = TransformSourceVertex(_SourceVertices[_SourceIndices[triStart+1]]);
+    inputs[2] = TransformSourceVertex(_SourceVertices[_SourceIndices[triStart+2]]);
+
+    OutputVertex center;
+    float height = sin(_Time.y * _AnimationFrequency) * _PyramidHeight;
+    float3 triangleNormalWS = ComputeNormalFromTriangle(inputs[0].positionWS, inputs[1].positionWS, inputs[2].positionWS);
+    center.positionWS = GetCenter(inputs[0].positionWS, inputs[1].positionWS, inputs[2].positionWS) + triangleNormalWS * height;
+    center.uv = GetCenter(inputs[0].uv, inputs[1].uv, inputs[2].uv);
+
+    // Setup and output triangle
+    SetupAndOutputTriangle(inputs[0], inputs[1], center);
+    SetupAndOutputTriangle(inputs[1], inputs[2], center);
+    SetupAndOutputTriangle(inputs[2], inputs[0], center);
+    
+}
