@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 4494ba29153f68640a4afa7efd0051dd
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - csWindInheritance: {fileID: 7200000, guid: f341bef9662a39c4e8c25d92334d8b3f, type: 3}
+  - csInjectWindDirectionAndIntensity: {fileID: 7200000, guid: 3ede1ac5cd584034dbcd7baa06043f64, type: 3}
+  - csWindPropagation: {fileID: 7200000, guid: 9e755a92f016ef145b778d70acbe2768, type: 3}
+  - textureNoise2D: {fileID: 2800000, guid: 86bebe6ef974d77418f51afe2ff3e498, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

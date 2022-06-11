@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 [ExecuteAlways]
 public class PyramidFaceRenderer : MonoBehaviour
@@ -15,6 +17,14 @@ public class PyramidFaceRenderer : MonoBehaviour
     [SerializeField] private Material material = default;
     [SerializeField] private float pyramidHeight = 1;
     [SerializeField] private float animationFrequency = 1;
+    
+#if UNITY_EDITOR
+    private bool editorSaveSubscribed = false;
+    private void SceneSaved(Scene scene)
+    {
+        OnEnable();
+    }
+#endif
 
     // make sure the data layouts sequentially
     [System.Runtime.InteropServices.StructLayout(LayoutKind.Sequential)]
@@ -57,10 +67,15 @@ public class PyramidFaceRenderer : MonoBehaviour
         SourceVertex[] vertices = new SourceVertex[positions.Length];
         for (int i = 0; i < vertices.Length; i++)
         {
+            Vector2 uv = Vector2.zero;
+            if (uvs.Length >= positions.Length)
+            {
+                uv = uvs[i];
+            }
             vertices[i] = new SourceVertex()
             {
                 position = positions[i],
-                uv = uvs[i]
+                uv = uv
             };
         }
         int numTriangles = indices.Length / 3;
@@ -117,7 +132,7 @@ public class PyramidFaceRenderer : MonoBehaviour
         initialized = false;
     }
 
-    public Bounds TransformBounds(Bounds boundsOS)
+    public static Bounds TransformBounds(Transform transform, Bounds boundsOS)
     {
         var center = transform.TransformPoint(boundsOS.center);
         
@@ -137,11 +152,17 @@ public class PyramidFaceRenderer : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (!Application.isPlaying)
+        {
+            OnDisable();
+            OnEnable();
+        }
+        
         if (initialized)
         {
             outputTriangleBuffer.SetCounterValue(0);
 
-            Bounds bounds = TransformBounds(localBound);
+            Bounds bounds = TransformBounds(this.transform, localBound);
         
             pyramidComputeShader.SetMatrix("_Matrix_M", transform.localToWorldMatrix);
             pyramidComputeShader.SetFloat("_AnimationFrequency", animationFrequency);

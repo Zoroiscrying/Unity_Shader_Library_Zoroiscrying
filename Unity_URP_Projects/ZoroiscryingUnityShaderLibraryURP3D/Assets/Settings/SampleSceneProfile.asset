@@ -114,7 +114,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 479d7e7301b745d99ef0b1cbd15de961, type: 3}
   m_Name: InvertColorPostProcess
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   invert:
     m_OverrideState: 1
     m_Value: 1
