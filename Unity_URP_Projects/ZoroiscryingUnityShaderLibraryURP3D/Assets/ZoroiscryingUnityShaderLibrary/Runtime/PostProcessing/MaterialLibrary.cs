@@ -16,6 +16,8 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
 
         public readonly Material GaussianBlur;
 
+        public readonly Material GlobalWindDebug;
+
         public MaterialLibrary(AdditionalPostProcessData data)
         {
             InvertColorMat = Load(data.shaders.invertColorShader);
@@ -25,6 +27,7 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
             DepthNormalsOutline = Load(data.shaders.depthNormalsOutlineShader);
             PostProcessLightVolume = Load(data.shaders.postProcessLightVolumeShader);
             GaussianBlur = Load(data.shaders.gaussianBlurDepthAwareness);
+            GlobalWindDebug = Load(data.shaders.globalWindDebugShader);
         }
 
         private Material Load(Shader shader)

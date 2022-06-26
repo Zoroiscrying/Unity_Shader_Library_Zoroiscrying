@@ -25,6 +25,7 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
         private ImageBasedOutline m_imageBasedOutline;
         private DepthNormalsOutline m_depthNormalsOutline;
         private PostProcessLightVolume m_postProcessLightVolume;
+        private DebugGlobalWindPostProcess m_debugWind;
 
         MaterialLibrary m_Materials;
         
@@ -63,6 +64,8 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
             m_imageBasedOutline = stack.GetComponent<ImageBasedOutline>();
             m_depthNormalsOutline = stack.GetComponent<DepthNormalsOutline>();
             m_postProcessLightVolume = stack.GetComponent<PostProcessLightVolume>();
+            m_debugWind = stack.GetComponent<DebugGlobalWindPostProcess>();
+            
             var cmd = CommandBufferPool.Get(k_RenderPostProcessingTag);
             cmd.Clear();
 
@@ -122,6 +125,33 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
                 SetupPostProcessLightVolumeOutline(
                     cmd, ref renderingData, m_Materials.PostProcessLightVolume, ref cameraData, m_Materials.GaussianBlur);
             }
+
+            if (m_debugWind.IsActive())
+            {
+                SetupDebugGlobalWind(cmd, ref renderingData, m_Materials.GlobalWindDebug);
+            }
+        }
+
+        private void SetupDebugGlobalWind(CommandBuffer cmd, ref RenderingData renderingData, Material debugWindMaterial)
+        {
+            cmd.BeginSample("Debug Global Wind");
+            
+            switch (m_debugWind.debugType.value)
+            {
+                case DebugGlobalWindType.DisplayDirection:
+                    debugWindMaterial.EnableKeyword("DEBUG_DIRECTION");
+                    debugWindMaterial.DisableKeyword("DEBUG_SPEED");
+                    break;
+                case DebugGlobalWindType.DisplaySpeed:
+                    debugWindMaterial.EnableKeyword("DEBUG_SPEED");
+                    debugWindMaterial.DisableKeyword("DEBUG_DIRECTION");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            
+            Blit(cmd, ref renderingData, debugWindMaterial, 0);
+            cmd.EndSample("Debug Global Wind");
         }
         
         private void SetupInvertColor(CommandBuffer cmd, ref RenderingData renderingData, Material invertMaterial)

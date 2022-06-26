@@ -59,7 +59,6 @@
 
             // sRGB -> Linear
             c.rgb = SRGBToLinear(rgb);
-
             return c;
         }
     

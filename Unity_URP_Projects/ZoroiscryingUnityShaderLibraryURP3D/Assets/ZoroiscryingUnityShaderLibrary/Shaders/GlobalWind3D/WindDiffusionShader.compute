@@ -1,0 +1,183 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel DiffusionX
+#pragma kernel DiffusionY
+#pragma kernel DiffusionZ
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+//Diffusion
+
+//RWTexture3D<half4> _WindTexturePrev;
+//RWTexture3D<half4> _WindTexturePrevPrev;
+
+RWTexture3D<int> _WindTexturePrevX;
+RWTexture3D<int> _WindTexturePrevY;
+RWTexture3D<int> _WindTexturePrevZ;
+
+RWTexture3D<int> _WindTexturePrevPrevX;
+RWTexture3D<int> _WindTexturePrevPrevY;
+RWTexture3D<int> _WindTexturePrevPrevZ;
+
+uint3 _WindVolumeTextureSize;
+float _DiffusionStrength;
+// float _DeltaTime; - Replaced with unity_DeltaTime[0]
+
+[numthreads(8,4,8)]
+void DiffusionX (uint3 id : SV_DispatchThreadID)
+{
+    //const float a = _DeltaTime * _DiffusionStrength * _WindVolumeTextureSize.x;
+    const float a = unity_DeltaTime[0] * _DiffusionStrength;
+    const uint3 offset = uint3(1, 0, 0);
+    if (id.x == 0) // boundary
+    {
+        // x velocity diffusion
+        _WindTexturePrevPrevX[id] =
+        _WindTexturePrevX[id] +
+            a * (0 + _WindTexturePrevX[id + offset] - 2 * _WindTexturePrevX[id]);
+        // y velocity diffusion
+        _WindTexturePrevPrevY[id] =
+        _WindTexturePrevY[id] +
+            a * (0 + _WindTexturePrevY[id + offset] - 2 * _WindTexturePrevY[id]);
+        // z velocity diffusion
+        _WindTexturePrevPrevZ[id] =
+        _WindTexturePrevZ[id] +
+            a * (0 + _WindTexturePrevZ[id + offset] - 2 * _WindTexturePrevZ[id]);  
+    }
+    else if (id.x == _WindVolumeTextureSize.x - 1) // boundary 2
+    {
+        // X
+        _WindTexturePrevPrevX[id] =
+        _WindTexturePrevX[id] +
+            a * (_WindTexturePrevX[id - offset] + 0 - 2 * _WindTexturePrevX[id]);
+        // Y
+        _WindTexturePrevPrevY[id] =
+        _WindTexturePrevY[id] +
+            a * (_WindTexturePrevY[id - offset] + 0 - 2 * _WindTexturePrevY[id]);
+        // Z
+        _WindTexturePrevPrevZ[id] =
+        _WindTexturePrevZ[id] +
+            a * (_WindTexturePrevZ[id - offset] + 0 - 2 * _WindTexturePrevZ[id]);  
+    }
+    else // inside
+    {
+        // X
+        _WindTexturePrevPrevX[id] =
+        _WindTexturePrevX[id] +
+            a * (_WindTexturePrevX[id - offset] + _WindTexturePrevX[id + offset] - 2 * _WindTexturePrevX[id]);
+        // Y
+        _WindTexturePrevPrevY[id] =
+        _WindTexturePrevY[id] +
+            a * (_WindTexturePrevY[id - offset] + _WindTexturePrevY[id + offset] - 2 * _WindTexturePrevY[id]);
+        // Z
+        _WindTexturePrevPrevZ[id] =
+        _WindTexturePrevZ[id] +
+            a * (_WindTexturePrevZ[id - offset] + _WindTexturePrevZ[id + offset] - 2 * _WindTexturePrevZ[id]);  
+    }
+}
+
+[numthreads(8,4,8)]
+void DiffusionY (uint3 id : SV_DispatchThreadID)
+{
+    // const float a = _DeltaTime * _DiffusionStrength * _WindVolumeTextureSize.y;
+    const float a = unity_DeltaTime[0] * _DiffusionStrength;
+    const uint3 offset = uint3(0, 1, 0);
+    if (id.y == 0)
+    {
+        // x velocity diffusion
+        _WindTexturePrevPrevX[id] =
+        _WindTexturePrevX[id] +
+            a * (0 + _WindTexturePrevX[id + offset] - 2 * _WindTexturePrevX[id]);
+        // y velocity diffusion
+        _WindTexturePrevPrevY[id] =
+        _WindTexturePrevY[id] +
+            a * (0 + _WindTexturePrevY[id + offset] - 2 * _WindTexturePrevY[id]);
+        // z velocity diffusion
+        _WindTexturePrevPrevZ[id] =
+        _WindTexturePrevZ[id] +
+            a * (0 + _WindTexturePrevZ[id + offset] - 2 * _WindTexturePrevZ[id]);  
+    }
+    else if (id.y == _WindVolumeTextureSize.y - 1)
+    {
+        // X
+        _WindTexturePrevPrevX[id] =
+        _WindTexturePrevX[id] +
+            a * (_WindTexturePrevX[id - offset] + 0 - 2 * _WindTexturePrevX[id]);
+        // Y
+        _WindTexturePrevPrevY[id] =
+        _WindTexturePrevY[id] +
+            a * (_WindTexturePrevY[id - offset] + 0 - 2 * _WindTexturePrevY[id]);
+        // Z
+        _WindTexturePrevPrevZ[id] =
+        _WindTexturePrevZ[id] +
+            a * (_WindTexturePrevZ[id - offset] + 0 - 2 * _WindTexturePrevZ[id]);  
+    }
+    else
+    {
+        // X
+        _WindTexturePrevPrevX[id] =
+        _WindTexturePrevX[id] +
+            a * (_WindTexturePrevX[id - offset] + _WindTexturePrevX[id + offset] - 2 * _WindTexturePrevX[id]);
+        // Y
+        _WindTexturePrevPrevY[id] =
+        _WindTexturePrevY[id] +
+            a * (_WindTexturePrevY[id - offset] + _WindTexturePrevY[id + offset] - 2 * _WindTexturePrevY[id]);
+        // Z
+        _WindTexturePrevPrevZ[id] =
+        _WindTexturePrevZ[id] +
+            a * (_WindTexturePrevZ[id - offset] + _WindTexturePrevZ[id + offset] - 2 * _WindTexturePrevZ[id]);  
+    }
+}
+
+[numthreads(8,4,8)]
+void DiffusionZ (uint3 id : SV_DispatchThreadID)
+{
+    // const float a = _DeltaTime * _DiffusionStrength * _WindVolumeTextureSize.z;
+    const float a = unity_DeltaTime[0] * _DiffusionStrength;
+    const uint3 offset = uint3(0, 0, 1);
+    if (id.z == 0)
+    {
+        // x velocity diffusion
+        _WindTexturePrevPrevX[id] =
+        _WindTexturePrevX[id] +
+            a * (0 + _WindTexturePrevX[id + offset] - 2 * _WindTexturePrevX[id]);
+        // y velocity diffusion
+        _WindTexturePrevPrevY[id] =
+        _WindTexturePrevY[id] +
+            a * (0 + _WindTexturePrevY[id + offset] - 2 * _WindTexturePrevY[id]);
+        // z velocity diffusion
+        _WindTexturePrevPrevZ[id] =
+        _WindTexturePrevZ[id] +
+            a * (0 + _WindTexturePrevZ[id + offset] - 2 * _WindTexturePrevZ[id]);  
+    }
+    else if (id.z == _WindVolumeTextureSize.z - 1)
+    {
+        // X
+        _WindTexturePrevPrevX[id] =
+        _WindTexturePrevX[id] +
+            a * (_WindTexturePrevX[id - offset] + 0 - 2 * _WindTexturePrevX[id]);
+        // Y
+        _WindTexturePrevPrevY[id] =
+        _WindTexturePrevY[id] +
+            a * (_WindTexturePrevY[id - offset] + 0 - 2 * _WindTexturePrevY[id]);
+        // Z
+        _WindTexturePrevPrevZ[id] =
+        _WindTexturePrevZ[id] +
+            a * (_WindTexturePrevZ[id - offset] + 0 - 2 * _WindTexturePrevZ[id]);  
+    }
+    else
+    {
+        // X
+        _WindTexturePrevPrevX[id] =
+        _WindTexturePrevX[id] +
+            a * (_WindTexturePrevX[id - offset] + _WindTexturePrevX[id + offset] - 2 * _WindTexturePrevX[id]);
+        // Y
+        _WindTexturePrevPrevY[id] =
+        _WindTexturePrevY[id] +
+            a * (_WindTexturePrevY[id - offset] + _WindTexturePrevY[id + offset] - 2 * _WindTexturePrevY[id]);
+        // Z
+        _WindTexturePrevPrevZ[id] =
+        _WindTexturePrevZ[id] +
+            a * (_WindTexturePrevZ[id - offset] + _WindTexturePrevZ[id + offset] - 2 * _WindTexturePrevZ[id]);    
+    }
+}
+
+

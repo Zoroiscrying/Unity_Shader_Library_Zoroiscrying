@@ -76,11 +76,16 @@ Varyings DebugWindPassVertex(Attributes input, uint instanceID : SV_InstanceID)
 
     float3 windDirection = output.WindDirectionSpeed.xyz;
     float3 windMeshPointingDirection = float3(0, 1, 0);
+    
     float3 axis = cross(windMeshPointingDirection, windDirection);
     float angle = FastACos(dot(windDirection, windMeshPointingDirection));
+    
     float3 newPositionOS = 0;
     Unity_RotateAboutAxis_Radians_float(input.positionOS, axis, angle, newPositionOS);
-    positionWS.xyz = data.xyz + _WindVolumeCenterPosition.xyz + newPositionOS * 10 * max(output.WindDirectionSpeed.w, 0.25);
+    
+    // local position offset + local to world position + scale calculation
+    float scale = saturate((output.WindDirectionSpeed.w - 0.5)/(4.5 - 0.5));
+    positionWS.xyz = data.xyz + _WindVolumeCenterPosition.xyz + newPositionOS * 5 * max(scale * 3, 0.75);
     output.positionCS = TransformWorldToHClip(positionWS.xyz);
     
     //output.uv = input.uv;
@@ -111,7 +116,7 @@ half4 DebugWindPassFragment(Varyings input) : SV_Target
     //#else
     //    half fogFactor = input.fogCoord;
     //#endif
-    float lerpMeter = (input.WindDirectionSpeed.w - _MinVelClamp) / (_MaxVelClamp - _MinVelClamp);
+    float lerpMeter = clamp((input.WindDirectionSpeed.w - _MinVelClamp) / (_MaxVelClamp - _MinVelClamp), 0.0 , 2.5);
     half4 finalColor = lerp(_ColorMinVel, _ColorMaxVel, lerpMeter);
     //finalColor.rgb = MixFog(finalColor.rgb, fogFactor);
     return finalColor;

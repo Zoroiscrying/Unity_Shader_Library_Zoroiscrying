@@ -1,39 +1,139 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma multi_compile_local __ TEXTURE_NOISE FUNCTION_NOISE
 #pragma kernel CSMain
+
+#define WIND_CALCULATION
+#define BOX_WINDS
+#define CYLINDER_WINDS
+#define SPHERE_WINDS
+
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-// Wind Volume
-RWTexture3D<float4> _WindDirectionIntensityVolume;
-float4 _WindNoiseScrollDirAndSpeed;
-float3 _WindVolumeCenterPosition;
+// Wind Volume XYZ Axis separated
+#define FXDPT_SIZE (1 << 16) // negative 16, positive 16 => int32 texture
+RWTexture3D<int> _GlobalWindVolume3DX;
+RWTexture3D<int> _GlobalWindVolume3DY;
+RWTexture3D<int> _GlobalWindVolume3DZ;
+
+float4 _WindVolumeCenterPosition;
 float _WindVolumeVoxelSize;
-// Custom Parameters
-Texture2D _Noise;
-SamplerState sampler_Noise;
-half4 _AmbientWind;
-float _NoiseWindIntensity;
-float3 _WindNoisePosFrequency;
-float3 _WindNoisePosOffset;
+
+#ifdef WIND_CALCULATION
+
+struct FixedCalculationType
+{
+    float3 fixedWindVelocityWS;
+};
+StructuredBuffer<FixedCalculationType> _fixedCalculationParams;
+
+struct PointBasedCalculationType
+{
+    // xyz center point position (world space), w max wind speed 
+    float4 pointBasedCalculationDataAlpha;
+    // e^(-decay * distance)
+    float distanceDecayInfluence;
+};
+StructuredBuffer<PointBasedCalculationType> _pointBasedCalculationParams;
+
+struct AxisBasedCalculationType
+{
+    // xyz center point position (world space), w axis distance decay influence
+    float4 axisBasedCalculationDataAlpha;
+    // xyz axis direction (world space), w axis rotation velocity multiplier
+    float4 axisBasedCalculationDataBeta;
+};
+StructuredBuffer<AxisBasedCalculationType> _axisBasedCalculationParams;
+
+#endif
+
+float3 FixedCalculation(uint index)
+{
+    return _fixedCalculationParams[index].fixedWindVelocityWS;
+}
+
+float3 PointBasedCalculation(uint index, float3 positionWS)
+{
+    float4 dataAlpha = _pointBasedCalculationParams[index].pointBasedCalculationDataAlpha;
+    float decayInfluence = _pointBasedCalculationParams[index].distanceDecayInfluence;
+    float d = distance(dataAlpha.xyz, positionWS);
+    float3 direction = (dataAlpha.xyz - positionWS) / max(d, 0.0001f);
+    float speed = exp(-decayInfluence * d) * dataAlpha.w;
+    return direction * speed;
+}
+
+void Unity_RotateAboutAxis_Radians_float(float3 In, float3 Axis, float Rotation, out float3 Out)
+{
+    float s = sin(Rotation);
+    float c = cos(Rotation);
+    float one_minus_c = 1.0 - c;
+
+    Axis = normalize(Axis);
+    float3x3 rot_mat = 
+    {   one_minus_c * Axis.x * Axis.x + c, one_minus_c * Axis.x * Axis.y - Axis.z * s, one_minus_c * Axis.z * Axis.x + Axis.y * s,
+        one_minus_c * Axis.x * Axis.y + Axis.z * s, one_minus_c * Axis.y * Axis.y + c, one_minus_c * Axis.y * Axis.z - Axis.x * s,
+        one_minus_c * Axis.z * Axis.x - Axis.y * s, one_minus_c * Axis.y * Axis.z + Axis.x * s, one_minus_c * Axis.z * Axis.z + c
+    };
+    Out = mul(rot_mat,  In);
+}
+
+float3 AxisBasedCalculation(uint index, float3 positionWS)
+{
+    float4 dataAlpha = _axisBasedCalculationParams[index].axisBasedCalculationDataAlpha;
+    float4 dataBeta = _axisBasedCalculationParams[index].axisBasedCalculationDataBeta;
+    
+    const float3 axis_point = dataAlpha.xyz;
+    const float3 axis_direction = dataBeta.xyz;
+
+    const float3 axis_point_to_voxel = positionWS - axis_point;
+    const float3 axis_direction_vector = axis_direction * dot(axis_point_to_voxel, axis_direction);
+    const float3 perpendicular_vector = axis_point_to_voxel - axis_direction_vector;
+    float rotate_rad = PI * _Time[0] * 4;
+    float3 rotate_perpendicular_vector;
+    //Unity_RotateAboutAxis_Radians_float(perpendicular_vector, axis_direction, rotate_rad, rotate_perpendicular_vector);
+    
+    float d = length(perpendicular_vector);
+    const float3 rotate_perpendicular_direction = perpendicular_vector / max(d, 0.0001f);
+    float speed = exp(-dataAlpha.w * d) * dataBeta.w;
+    float3 vortex_direction = cross(rotate_perpendicular_direction, axis_direction);
+    
+    return vortex_direction * speed;
+}
 
 #ifdef BOX_WINDS
 struct BoxWind
 {
-    float3 center;
-    float3 extends;
-    float3x3 rotation;
+    uint calculationType;
+    uint calculationBufferIndex;
+    float3 extendsLocal;
+    float4x4 worldToLocal;
 };
 StructuredBuffer<BoxWind> _boxWindContributors;
-float _boxWindCount;
+int _boxWindCount;
 #endif
 
 #ifdef CYLINDER_WINDS
 struct CylinderWind
 {
-    
+    uint calculationType;
+    uint calculationBufferIndex;
+    float2 extendsLocal; // x for radius squared, y for height
+    float4x4 worldToLocal;
 };
 StructuredBuffer<CylinderWind> _cylinderWindContributors;
-float _cylinderWindCount;
+int _cylinderWindCount;
+#endif
+
+#ifdef SPHERE_WINDS
+
+struct SphereWind
+{
+    uint calculationType;
+    uint calculationBufferIndex;
+    float3 centerPositionWorldSpace;
+    float extendSquared; // radius squared
+};
+StructuredBuffer<SphereWind> _sphereWindContributors;
+int _sphereWindCount;
+
 #endif
 
 float hash( float n ) { return frac(sin(n)*753.5453123); }
@@ -50,20 +150,10 @@ float noisep(float3 x)
                lerp(lerp( hash(n+113.0), hash(n+114.0),f.x),
                    lerp( hash(n+270.0), hash(n+271.0),f.x),f.y),f.z);
 }
-// texture noise
-float noise(float3 x)
-{
-    float3 p = floor(x);
-    float3 f = frac(x);
-    f = f * f * (3.0 - 2.0 * f);
-    float2 uv = (p.xy + float2(37.0,17.0) * p.z) + f.xy;
-    float2 rg = _Noise.SampleLevel(sampler_Noise, (uv + 0.5) / 256.0, 0).yx;
-    return -1.0 + 2.0 * lerp(rg.x, rg.y, f.z);
-}
 
 float ScrollNoise(float3 pos, float speed, float scale, float3 dir, float amount, float bias = 0.0, float mult = 1.0)
 {
-    float time = _Time * speed;
+    float time = _Time.y * speed;
     float noiseScale = scale;
     float3 noiseScroll = dir * time;
     float3 q = pos - noiseScroll;
@@ -110,54 +200,125 @@ float3 GlobalWindNoise3D(float3 pos, float scrollSpeed, float3 frequency, float3
     return wind;
 }
 
-// Calculate the constant wind from current position
-float ConstantWind3D(float3 positionWS)
-{
-    return 0;
-}
-
 #ifdef BOX_WINDS
 float3 BoxWinds(float3 positionWS)
 {
-    float3 boxWindVector = 0;
+    float boxWindIntensity = 0;
+    float3 windCalculationResult = 0;
     for(int i = 0; i < _boxWindCount; i++)
     {
+        // get a vector from center to current voxel position in local space
+        float4 localVoxelPosition = mul(_boxWindContributors[i].worldToLocal, float4(positionWS, 1));
+        float3 extendsLocal = _boxWindContributors[i].extendsLocal;
+        // compare the local position with extends
+        float withInX = step(abs(localVoxelPosition.x), extendsLocal.x/2); // step (y,x) 1 if the x parameter is greater than or equal to the y parameter; otherwise, 0.
+        float withInY = step(abs(localVoxelPosition.y), extendsLocal.y/2);
+        float withInZ = step(abs(localVoxelPosition.z), extendsLocal.z/2);
+        
+        boxWindIntensity = withInX * withInY * withInZ;
+        
         // get the parameters needed to calculate wind directions and intensities
+        switch (_boxWindContributors[i].calculationType)
+        {
+            case 0:
+                windCalculationResult += FixedCalculation(_boxWindContributors[i].calculationBufferIndex);
+                break;
+            case 1:
+                windCalculationResult += PointBasedCalculation(_boxWindContributors[i].calculationBufferIndex, positionWS);
+                break;
+            case 2:
+                windCalculationResult += AxisBasedCalculation(_boxWindContributors[i].calculationBufferIndex, positionWS);
+                break;
+            default:
+                windCalculationResult += 0;
+                break;
+        }
     }
-    return boxWindVector;
+    return windCalculationResult * boxWindIntensity;
 }
 #endif
 
 #ifdef CYLINDER_WINDS
 float3 CylinderWinds(float3 positionWS)
 {
-    float3 cylinderWindVector = 0;
+    float cylinderWindIntensity = 0;
+    float3 windCalculationResult = 0;
     for(int i = 0; i < _cylinderWindCount; i++)
     {
+        float4 localVoxelPosition = mul(_cylinderWindContributors[i].worldToLocal, float4(positionWS, 1));
+        float2 extendsLocal = _cylinderWindContributors[i].extendsLocal;
+        // compare the local position with extends
+        const float distanceSquared = max(Length2(localVoxelPosition.xyz), 0.0f);
+        float withInX = step(distanceSquared, extendsLocal.x); // step (y,x) 1 if the x parameter is greater than or equal to the y parameter; otherwise, 0.
+        float withInY = step(abs(localVoxelPosition.y), extendsLocal.y/2);
+
+        cylinderWindIntensity = withInX * withInY;
+        
         // get the parameters needed to calculate wind directions and intensities
+        switch (_cylinderWindContributors[i].calculationType)
+        {
+        case 0:
+            windCalculationResult += FixedCalculation(_cylinderWindContributors[i].calculationBufferIndex);
+            break;
+        case 1:
+            windCalculationResult += PointBasedCalculation(_cylinderWindContributors[i].calculationBufferIndex, positionWS);
+            break;
+        case 2:
+            windCalculationResult += AxisBasedCalculation(_cylinderWindContributors[i].calculationBufferIndex, positionWS);
+            break;
+        default:
+            windCalculationResult += 0;
+            break;
+        }
     }
-    return cylinderWindVector;
+    return windCalculationResult * cylinderWindIntensity;
 }
+#endif
+
+#ifdef SPHERE_WINDS
+
+float3 SphereWinds(float3 positionWS)
+{
+    float sphereWindIntensity = 0;
+    float3 windCalculationResult = 0;
+    for(int i = 0; i < _sphereWindCount; i++)
+    {
+        float3 localVoxelPosition = positionWS - _sphereWindContributors[i].centerPositionWorldSpace;
+        // compare the local position with radius
+        const float distanceSquared = max(Length2(localVoxelPosition), 0.0f);
+        float withInX = step(distanceSquared, _sphereWindContributors[i].extendSquared); // step (y,x) 1 if the x parameter is greater than or equal to the y parameter; otherwise, 0.
+
+        sphereWindIntensity = withInX;
+        
+        // get the parameters needed to calculate wind directions and intensities
+        switch (_sphereWindContributors[i].calculationType)
+        {
+        case 0:
+            windCalculationResult += FixedCalculation(_sphereWindContributors[i].calculationBufferIndex);
+            break;
+        case 1:
+            windCalculationResult += PointBasedCalculation(_sphereWindContributors[i].calculationBufferIndex, positionWS);
+            break;
+        case 2:
+            windCalculationResult += AxisBasedCalculation(_sphereWindContributors[i].calculationBufferIndex, positionWS);
+            break;
+        default:
+            windCalculationResult += 0;
+            break;
+        }
+    }
+    return windCalculationResult * sphereWindIntensity;
+}
+
 #endif
 
 [numthreads(8,4,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float4 directionAndIntensity = _AmbientWind;
-    float3 windWithIntensity = directionAndIntensity.xyz * directionAndIntensity.w;
+    float3 positionWS = 0;
+    positionWS = (float3(id) - float3(15.5, 7.5, 15.5)) * _WindVolumeVoxelSize + _WindVolumeCenterPosition.xyz;
     
-    float2 uv = float2(id.x/63.0, id.y/31.0);
-    float z = id.z/63.0;
-    float3 positionWS = _WindVolumeCenterPosition + (float3(id) - float3(31.5, 15.5, 31.5)) * _WindVolumeVoxelSize;
-    
-    #if FUNCTION_NOISE
-    windWithIntensity += GlobalWindNoise3D(positionWS,
-                    _WindNoiseScrollDirAndSpeed.a,
-                    _WindNoisePosFrequency,
-                    _WindNoiseScrollDirAndSpeed.xyz, _NoiseWindIntensity);
-    #elif TEXTURE_NOISE
-    // do nothing
-    #endif
+    float3 windWithIntensity = 0;
 
     #ifdef BOX_WINDS
     windWithIntensity += BoxWinds(positionWS);
@@ -166,12 +327,18 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     #ifdef CYLINDER_WINDS
     windWithIntensity += CylinderWinds(positionWS);
     #endif
+
+    #ifdef SPHERE_WINDS
+    windWithIntensity += SphereWinds(positionWS);
+    #endif
     
     // Output, rgb direction, a magnitude (speed)
     float4 output;
-    float mag = length(windWithIntensity.xyz);
-    float3 dir = windWithIntensity/mag;
-    output.rgb = dir;
-    output.a = mag;
-    _WindDirectionIntensityVolume[id] = output;
+    //float mag = length(windWithIntensity.xyz);
+    //float3 dir = windWithIntensity/mag;
+    output.rgb = windWithIntensity;
+    output.a = 0; // not used
+    _GlobalWindVolume3DX[id] += (int)(output.x * FXDPT_SIZE);
+    _GlobalWindVolume3DY[id] += (int)(output.y * FXDPT_SIZE);
+    _GlobalWindVolume3DZ[id] += (int)(output.z * FXDPT_SIZE);
 }

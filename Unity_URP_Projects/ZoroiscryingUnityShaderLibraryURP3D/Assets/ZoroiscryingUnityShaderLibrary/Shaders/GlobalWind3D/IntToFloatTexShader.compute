@@ -1,0 +1,175 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma multi_compile_local __ TEXTURE_NOISE FUNCTION_NOISE
+#pragma kernel CSMain
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+RWTexture3D<half4> _WindTextureTarget;
+RWTexture3D<int> _WindTextureSourceX;
+RWTexture3D<int> _WindTextureSourceY;
+RWTexture3D<int> _WindTextureSourceZ;
+uint3 _volumeTexSize;
+
+float4 _WindNoiseScrollDirAndSpeed;
+float3 _WindVolumeCenterPosition;
+float _WindVolumeVoxelSize;
+// Custom Parameters
+Texture2D _Noise;
+SamplerState sampler_Noise;
+half4 _AmbientWind;
+float _NoiseWindIntensity;
+float3 _WindNoisePosFrequency;
+
+#define FXDPT_SIZE (1 << 16) // negative 16, positive 16 => int32 texture
+
+float hash( float n ) { return frac(sin(n)*753.5453123); }
+
+// parameter noise
+float noisep(float3 x)
+{
+    float3 p = floor(x);
+    float3 f = frac(x);
+    f = f*f*(3.0-2.0*f);
+	
+    float n = p.x + p.y*157.0 + 113.0*p.z;
+    return lerp(lerp(lerp( hash(n+  0.0), hash(n+  1.0),f.x),
+                   lerp( hash(n+157.0), hash(n+158.0),f.x),f.y),
+               lerp(lerp( hash(n+113.0), hash(n+114.0),f.x),
+                   lerp( hash(n+270.0), hash(n+271.0),f.x),f.y),f.z);
+}
+
+// texture noise
+float noise(float3 x)
+{
+    float3 p = floor(x);
+    float3 f = frac(x);
+    f = f * f * (3.0 - 2.0 * f);
+    float2 uv = (p.xy + float2(37.0,17.0) * p.z) + f.xy;
+    float2 rg = _Noise.SampleLevel(sampler_Noise, (uv + 0.5) / 256.0, 0).yx;
+    return -1.0 + 2.0 * lerp(rg.x, rg.y, f.z);
+}
+
+float ScrollNoise(float3 pos, float speed, float scale, float3 dir, float amount, float bias = 0.0, float mult = 1.0)
+{
+    float time = _Time.y * speed;
+    float noiseScale = scale;
+    float3 noiseScroll = dir * time;
+    float3 q = pos - noiseScroll;
+    q *= scale;
+    float f = 0;
+    f = 0.5 * noisep(q);
+    // scroll the next octave in the opposite direction to get some morphing instead of just scrolling
+    q += noiseScroll * scale;
+    q = q * 2.01;
+    f += 0.25 * noisep(q);
+
+    f += bias;
+    f *= mult;
+
+    f = max(f, 0.0);
+    return lerp(1.0, f, amount);
+}
+
+float3 GlobalWindNoise3D(float3 pos, float scrollSpeed, float3 frequency, float3 scrollDir, float intensity = 1.0)
+{
+    float3 noiseOffset = float3(725, 63, 886);
+    float time = _Time.y * scrollSpeed;
+    float3 noiseScroll = scrollDir * time;
+    float3 newPosition = pos - noiseScroll;
+    newPosition *= frequency;
+    
+    // three noise values calculation, 2 octaves, 0.75 - 1.333333
+    float f1 = 0;
+    f1 = 0.5 * noisep(newPosition);
+    float f2 = 0;
+    f2 = 0.5 * noisep(newPosition + noiseOffset);
+    float f3 = 0;
+    f3 = 0.5 * noisep(newPosition - noiseOffset);
+    
+    newPosition += noiseScroll * frequency;
+    newPosition *= 2.01;
+    noiseOffset *= 2.01;
+    f1 += 0.25 * noisep(newPosition);
+    f2 += 0.25 * noisep(newPosition + noiseOffset);
+    f3 += 0.25 * noisep(newPosition - noiseOffset);
+
+    float3 wind = (float3(f1, f2, f3) - 0.5) * 2;
+    wind *= 1.333333 * intensity;
+    return wind;
+}
+
+float3 GlobalWindTextureNoise3D(float3 pos, float scrollSpeed, float3 frequency, float3 scrollDir, float intensity = 1.0)
+{
+    float3 noiseOffset = float3(725, 63, 886);
+    float time = _Time.y * scrollSpeed;
+    float3 noiseScroll = scrollDir * time;
+    float3 newPosition = pos - noiseScroll;
+    newPosition *= frequency;
+
+    // three noise values calculation, 2 octaves, 0.75 - 1.333333
+    float f1 = 0;
+    f1 = 0.5 * noisep(newPosition);
+    float f2 = 0;
+    f2 = 0.5 * noisep(newPosition + noiseOffset);
+    float f3 = 0;
+    f3 = 0.5 * noisep(newPosition - noiseOffset);
+    
+    newPosition += noiseScroll * frequency;
+    newPosition *= 2.01;
+    noiseOffset *= 2.01;
+    f1 += 0.25 * noisep(newPosition);
+    f2 += 0.25 * noisep(newPosition + noiseOffset);
+    f3 += 0.25 * noisep(newPosition - noiseOffset);
+
+    float3 wind = float3(f1, f2, f3);
+    wind *= 1.333333 * intensity;
+    return wind;
+}
+
+float3 AmbientWind()
+{
+    float4 directionAndIntensity = _AmbientWind;
+    return directionAndIntensity.xyz * directionAndIntensity.w;
+}
+
+float3 NoiseWind(float3 positionWS)
+{
+    float3 windWithIntensity = 0;
+    
+    #if FUNCTION_NOISE
+    windWithIntensity += GlobalWindNoise3D(positionWS,
+                    _WindNoiseScrollDirAndSpeed.a,
+                    _WindNoisePosFrequency,
+                    _WindNoiseScrollDirAndSpeed.xyz, _NoiseWindIntensity);
+    #elif TEXTURE_NOISE
+    windWithIntensity += GlobalWindTextureNoise3D(positionWS,
+        _WindNoiseScrollDirAndSpeed.a,
+        _WindNoisePosFrequency,
+        _WindNoiseScrollDirAndSpeed.xyz,
+        _NoiseWindIntensity);
+    #endif
+    
+    return windWithIntensity;
+}
+
+[numthreads(8,4,8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // Convert the data into half4
+    float3 windVelocities = float3(
+        (float)_WindTextureSourceX[id] / FXDPT_SIZE,
+        (float)_WindTextureSourceY[id] / FXDPT_SIZE,
+        (float)_WindTextureSourceZ[id] / FXDPT_SIZE);
+
+    // Add in global wind here
+    // Add in ambient wind
+    windVelocities += AmbientWind();
+
+    const float3 positionWS = _WindVolumeCenterPosition + (float3(id) - float3(15.5, 7.5, 15.5)) * _WindVolumeVoxelSize;
+    windVelocities += NoiseWind(positionWS);
+    //windVelocities += float3(0.01f, 0.00f, 0.00f);
+    
+    float mag = length(windVelocities);
+    float3 windDir = windVelocities / mag;
+    
+    _WindTextureTarget[id] = half4(windDir, mag);
+}

@@ -30,6 +30,8 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
 
             public Shader gaussianBlurDepthAwareness;
 
+            public Shader globalWindDebugShader;
+
             public void Init()
             {
                 invertColorShader = Shader.Find("PostProcess/PostProcessingTemplateShader");
@@ -39,6 +41,7 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
                 depthNormalsOutlineShader = Shader.Find("PostProcess/DepthNormalOutline");
                 postProcessLightVolumeShader = Shader.Find("PostProcess/PostProcessLightVolume");
                 gaussianBlurDepthAwareness = Shader.Find("PostProcess/GaussianBlur");
+                globalWindDebugShader = Shader.Find("PostProcess/DebugGlobalWind");
             }
         }
 
