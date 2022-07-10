@@ -22,6 +22,7 @@ half _SampleSpeed;
 half _DisplaceColorBlendStrength;
 float _DisplaceStrengthPower;
 half4 _DisplaceColor;
+int _Seed;
 
 // keep this file in sync with LitGBufferPass.hlsl
 
@@ -158,12 +159,12 @@ Varyings LitPassVertex(Attributes input)
     #if _SAMPLE_SINE
     
     displacementStrength = ApplySinVertexDisplacement_VectorDotProjection(
-        input.positionOS.xyz, _DisplacementDirection, _DisplacementAmplitude, _SampleFrequency, _SampleSpeed);
+        input.positionOS.xyz, _DisplacementDirection, _DisplacementAmplitude, _SampleFrequency, _SampleSpeed, _Seed);
     
     #elif _SAMPLE_NOISE
 
     displacementStrength = ApplyValueNoiseVertexDisplacement_VectorDotProjection(
-    input.positionOS.xyz, _DisplacementDirection, _DisplacementAmplitude, _SampleFrequency, _SampleSpeed);
+    input.positionOS.xyz, _DisplacementDirection, _DisplacementAmplitude, _SampleFrequency, _SampleSpeed, _Seed);
 
     #elif _SAMPLE_OTHER
     float fresnel = 1 - dot(normalInput.normalWS, viewDirWS);
@@ -174,12 +175,12 @@ Varyings LitPassVertex(Attributes input)
     input.positionOS.xyz, float3(0, 0, 1),
     float2(0.0, 0.02) + frac(_Time.x * 15.0) * 2, 0.0f,
     normalize(normalInput.normalWS) * 0.25 * fresnel,
-    _SampleFrequency, _SampleSpeed);
+    _SampleFrequency, _SampleSpeed, _Seed);
     input.positionOS.xyz = TransformWorldToObject(vertexInput.positionWS);
 
     #elif _SAMPLE_UNSTABLE_ENERGY
 
-    displacementStrength = ApplyValueNoiseVertexDisplacement_1DNoiseProjection(input.positionOS.xyz, _Time.x, input.normalOS * _DisplacementAmplitude, _SampleFrequency, _SampleSpeed);
+    displacementStrength = ApplyValueNoiseVertexDisplacement_1DNoiseProjection(input.positionOS.xyz, _Time.x, input.normalOS * _DisplacementAmplitude, _SampleFrequency, _SampleSpeed, _Seed);
     
     #endif
     // Re update the value after the tweak

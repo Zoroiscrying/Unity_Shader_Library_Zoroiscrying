@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1953259897 &8574412962073106934
+TerrainLayer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Terrain_Layer_Beach_Sand
+  m_DiffuseTexture: {fileID: 2800000, guid: 3b58a5aa39d2eaa49ac11a5e5cadb887, type: 3}
+  m_NormalMapTexture: {fileID: 2800000, guid: 42f4f0579ef31cd4e98608e29c1221a7, type: 3}
+  m_MaskMapTexture: {fileID: 2800000, guid: 9def33424b7409b4eb34f97f99dde71f, type: 3}
+  m_TileSize: {x: 12, y: 12}
+  m_TileOffset: {x: 0, y: 0}
+  m_Specular: {r: 0, g: 0, b: 0, a: 0}
+  m_Metallic: 0
+  m_Smoothness: 0
+  m_NormalScale: 1
+  m_DiffuseRemapMin: {x: 0, y: 0, z: 0, w: 0}
+  m_DiffuseRemapMax: {x: 1, y: 1, z: 1, w: 1}
+  m_MaskMapRemapMin: {x: 0, y: 0, z: 0, w: 0}
+  m_MaskMapRemapMax: {x: 0, y: 1, z: 1, w: 0.20941013}

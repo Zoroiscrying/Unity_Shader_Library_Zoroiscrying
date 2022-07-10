@@ -36,6 +36,25 @@ namespace ZoroiscryingUnityShaderLibrary.Editor.AssetCreation
                 path = AssetDatabase.GenerateUniqueAssetPath(path);
             System.IO.File.WriteAllBytes(path, bytes);
             AssetDatabase.Refresh();
+            
+            // make tex readable
+            var tImporter = AssetImporter.GetAtPath( path ) as TextureImporter;
+            if ( tImporter != null )
+            {
+                tImporter.textureType = TextureImporterType.Default;
+
+                tImporter.isReadable = true;
+
+                AssetDatabase.ImportAsset( path );
+                AssetDatabase.Refresh();
+            }
+            
+            var createdTex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            createdTex.wrapMode = TextureWrapMode.Clamp;
+            createdTex.Apply();
+            EditorUtility.SetDirty(createdTex);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
     }
 }

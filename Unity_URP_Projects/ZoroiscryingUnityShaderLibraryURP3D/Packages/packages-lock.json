@@ -168,6 +168,16 @@
         "com.unity.searcher": "4.9.1"
       }
     },
+    "com.unity.terrain-tools": {
+      "version": "4.0.3",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.modules.terrain": "1.0.0",
+        "com.unity.modules.terrainphysics": "1.0.0"
+      },
+      "url": "https://packages.unity.cn"
+    },
     "com.unity.test-framework": {
       "version": "1.1.31",
       "depth": 0,

@@ -155,7 +155,7 @@ half4 UnlitPassFragment(Varyings input) : SV_Target
     float edgeStrength = pow(saturate(1 - clamp((surfaceDistanceToScene - edgeDetectionBoundary.x)/ edgeDetectionBoundary.y, 0, 1)), _DepthParameter.w);
     edgeStrength = saturate(edgeStrength);
 
-    half3 color = _EdgeEmissionColor * edgeStrength;
+    half3 color = _EdgeEmissionColor * edgeStrength * _BackfaceRenderingParameters.y;
 
     half alpha = edgeStrength;
     //alpha = 0.5;

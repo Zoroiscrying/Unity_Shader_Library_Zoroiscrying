@@ -17,7 +17,7 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.MaterialModifier
             }
         }
 
-        public override void ApplyMaterialChange()
+        protected override void ApplyMaterialChange()
         {
             lutTexture = new Texture2D(lutTextureSize.x, lutTextureSize.y) {wrapMode = TextureWrapMode.Clamp};
 

@@ -39,6 +39,7 @@ half4 _RimLightColor;
 float _DisplacementStrength;
 float _DisplacementAmount;
 float _DisplacementSpeed;
+float4 _DisplacementDirection;
 
 // keep this file in sync with LitGBufferPass.hlsl
 
@@ -174,7 +175,7 @@ Varyings LitPassVertex(Attributes input)
     float glitchStep = 0.99 - 0.01 * (_DisplacementAmount - 0.5) * 2.0;
     float glitchStrength = step(glitchStep, value_noise11(input.positionOS.z * 10.0 + _Time.x * 1000.0)) * _DisplacementStrength;
     float distortionStrength = step(0.4, value_noise11(input.positionOS.z * 10.0 + _Time.x * 10.0 * _DisplacementSpeed)) * _DisplacementStrength * value_noise11(input.positionOS.z * 5.0);
-    input.positionOS.xyz += float3(value_noise11(_Time.x), value_noise11(_Time.y), 0) * (glitchStrength + distortionStrength);
+    input.positionOS.xyz += _DisplacementDirection.xyz * float3(value_noise11(_Time.x), value_noise11(_Time.y), value_noise11(_Time.x + 1955.5)) * (glitchStrength + distortionStrength);
 
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
 

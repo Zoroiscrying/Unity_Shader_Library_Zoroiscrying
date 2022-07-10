@@ -34,7 +34,7 @@
         _ParallaxStrength("Parallax Strength", Float) = 0.5
         
         // Shield hit effect
-        [Tooltip(Distance, Min, Max, Null)]_ScanParameter("Scan Parameter", Vector) = (1,1,1,1)
+        [Tooltip(Distance, Intensity, Null, Thickness)]_ScanParameter("Scan Parameter", Vector) = (1,1,1,1)
         _ScanPosition("Scan position", Vector) = (0,0,0,0)
         
         // Depth awareness
@@ -95,7 +95,7 @@
             Cull Front
             ZTest LEqual
             ZWrite Off
-            Tags{"RenderType" = "Opaque" "LightMode" = "FrontFaceHolofield"}
+            Tags{"RenderType" = "Opaque" "LightMode" = "BackFaceHolofield" "RenderPipeline" = "UniversalPipeline"}
             Name "Unlit"
 
             HLSLPROGRAM

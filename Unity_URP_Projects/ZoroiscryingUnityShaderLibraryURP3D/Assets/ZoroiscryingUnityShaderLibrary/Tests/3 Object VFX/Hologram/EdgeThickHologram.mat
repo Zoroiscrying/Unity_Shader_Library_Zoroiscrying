@@ -2,14 +2,16 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: EdgeThickHologram
   m_Shader: {fileID: 4800000, guid: 48ba670373e64e19b9b90c4ca8ac50c9, type: 3}
-  m_ShaderKeywords: _SCREEN_SPACE_TRANSPARENT
+  m_ValidKeywords:
+  - _SCREEN_SPACE_TRANSPARENT
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -121,6 +123,7 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _DisplacementDirection: {r: 0, g: 0, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimLightColor: {r: 8.522288, g: 10.680627, b: 4.7760534, a: 1}
     - _ScanDirection: {r: 0, g: 0, b: 1, a: 0}

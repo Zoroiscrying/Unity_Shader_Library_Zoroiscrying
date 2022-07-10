@@ -103,6 +103,7 @@ Shader "Custom/Object/Lit_Edge_Thick_Hologram"
         _DisplacementStrength("Displacement Strength", Range(0.001, 0.1)) = 0.03
         _DisplacementAmount("Displacement Probability", Range(0.0, 1.0)) = 0.5
         _DisplacementSpeed("Displacement Speed", Float) = 0.5
+        _DisplacementDirection("Displacement Direction", Vector) = (0, 0, 1, 0)
         
     }
     

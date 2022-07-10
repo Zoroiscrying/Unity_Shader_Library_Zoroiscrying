@@ -196,5 +196,15 @@ float simplex_noise12(in float2 p)
 	return dot( n, float3(70.0, 70.0, 70.0));
 }
 
+// Spherical Noise https://stackoverflow.com/questions/17095571/coherent-spherical-noise
+float3 spherical_noise33(in float3 input)
+{
+	float3 result = 0;
+	result.x = simplex_noise12(input.xy);
+	result.y = simplex_noise12(input.yz);
+	result.z = simplex_noise12(input.zx);
+	return result;
+}
+
 
 #endif

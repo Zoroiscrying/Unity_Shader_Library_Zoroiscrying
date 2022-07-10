@@ -1,24 +1,5 @@
 Shader "Custom/Object/Lit_Basic_Hologram"
 {
-    /*
-    The properties that should be included in most shader:
-    [MainTexture] _BaseMap("Albedo", 2D) = "white" {}
-    [MainColor] _BaseColor("Color", Color) = (1,1,1,1)
-    _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
-    [HDR] _EmissionColor("Color", Color) = (0,0,0)
-    _EmissionMap("Emission", 2D) = "white" {}
-    // Blending state
-    _Surface("__surface", Float) = 0.0
-    _Blend("__blend", Float) = 0.0
-    _Cull("__cull", Float) = 2.0
-    [ToggleUI] _AlphaClip("__clip", Float) = 0.0
-    [HideInInspector] _SrcBlend("__src", Float) = 1.0
-    [HideInInspector] _DstBlend("__dst", Float) = 0.0
-    [HideInInspector] _ZWrite("__zw", Float) = 1.0
-    [ToggleUI] _ReceiveShadows("Receive Shadows", Float) = 1.0
-    // Editmode props
-    _QueueOffset("Queue offset", Float) = 0.0
-    */
     Properties
     {
         // Specular vs Metallic workflow
@@ -103,6 +84,7 @@ Shader "Custom/Object/Lit_Basic_Hologram"
         _DisplacementStrength("Displacement Strength", Range(0.001, 0.1)) = 0.03
         _DisplacementAmount("Displacement Probability", Range(0.0, 1.0)) = 0.5
         _DisplacementSpeed("Displacement Speed", Float) = 0.5
+        _DisplacementDirection("Displacement Direction", Vector) = (0, 0, 1, 0)
         
     }
     

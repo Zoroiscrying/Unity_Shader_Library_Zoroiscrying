@@ -30,6 +30,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
             public MaterialProperty displacementStrength;
             public MaterialProperty displacementAmount;
             public MaterialProperty displacementSpeed;
+            public MaterialProperty displacementDirection;
 
             public BasicHologramProperties(MaterialProperty[] properties)
             {
@@ -56,6 +57,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
                 displacementStrength = FindProperty("_DisplacementStrength", properties);
                 displacementAmount = FindProperty("_DisplacementAmount", properties);
                 displacementSpeed = FindProperty("_DisplacementSpeed", properties);
+                displacementDirection = FindProperty("_DisplacementDirection", properties);
             }
         }
 
@@ -121,6 +123,8 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
                 EditorGUIUtility.TrTextContent("Displacement Amount"));
             materialEditor.ShaderProperty(basicHologramProperties.displacementSpeed,
                 EditorGUIUtility.TrTextContent("Displacement Speed"));
+            materialEditor.ShaderProperty(basicHologramProperties.displacementDirection,
+                EditorGUIUtility.TrTextContent("Displacement Direction"));
         }
     }
 }

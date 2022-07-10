@@ -18,6 +18,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor.SceneVisualization
         private Vector3[]  tangents;
         private float normalsLength = 1f;
         private bool enableVisualization = true;
+        private int maxVisualizeVertCount = 1000;
 
         private void OnEnable() {
             mf   = target as MeshFilter;
@@ -35,6 +36,10 @@ namespace ZoroiscryingUnityShaderLibrary.Editor.SceneVisualization
 
             if (enableVisualization)
             {
+                if (mesh.vertexCount > maxVisualizeVertCount)
+                {
+                    return;
+                }
                 Handles.matrix = mf.transform.localToWorldMatrix;
                 Handles.color = Color.yellow;
                 Handles.zTest = CompareFunction.LessEqual;
@@ -53,7 +58,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor.SceneVisualization
 
                 if (normals.Length > 0)
                 {
-                    for (int i = 0; i < len; i++) {
+                    for (int i = 0; i < maxVisualizeVertCount && i < len; i++) {
                         Handles.DrawLine(verts[i], verts[i] + normals[i] * normalsLength);
                     }   
                 }
@@ -62,7 +67,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor.SceneVisualization
             
                 if (tangents.Length > 0)
                 {
-                    for (int i = 0; i < len; i++) {
+                    for (int i = 0; i < maxVisualizeVertCount && i < len; i++) {
                         Handles.DrawLine(verts[i], verts[i] + tangents[i] * normalsLength);
                     }   
                 }   

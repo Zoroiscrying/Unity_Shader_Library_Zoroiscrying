@@ -39,8 +39,7 @@ half4 _RimLightColor;
 float _DisplacementStrength;
 float _DisplacementAmount;
 float _DisplacementSpeed;
-
-// keep this file in sync with LitGBufferPass.hlsl
+float4 _DisplacementDirection;
 
 struct Attributes
 {
@@ -171,9 +170,11 @@ Varyings LitPassVertex(Attributes input)
 
     // Apply vertex displacement here
     float glitchStep = 0.99 - 0.01 * (_DisplacementAmount - 0.5) * 2.0;
+    // sudden glitch
     float glitchStrength = step(glitchStep, value_noise11(input.positionOS.z * 10.0 + _Time.x * -1000.0)) * _DisplacementStrength;
+    // slow distortion
     float distortionStrength = step(0.6, pow(value_noise11(input.positionOS.z * 10.0 + _Time.x * 10.0 * _DisplacementSpeed), 2)) * _DisplacementStrength * value_noise11(input.positionOS.z * 5.0);
-    input.positionOS.xyz += float3(value_noise11(_Time.x), value_noise11(_Time.x+1598.56), 0) * (glitchStrength + distortionStrength);
+    input.positionOS.xyz += _DisplacementDirection.xyz * float3(value_noise11(_Time.x), value_noise11(_Time.y), value_noise11(_Time.x + 1955.5)) * (glitchStrength + distortionStrength);
 
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
 

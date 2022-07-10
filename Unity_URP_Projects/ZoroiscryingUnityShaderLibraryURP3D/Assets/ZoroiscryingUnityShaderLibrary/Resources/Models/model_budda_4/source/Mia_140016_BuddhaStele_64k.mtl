@@ -1,0 +1,19 @@
+newmtl Solid
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+Ns 0.0
+illum 0
+
+newmtl Mia_140016_BuddhaStele_64k
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+Ns 0.0
+illum 0
+map_Kd Mia_140016_BuddhaStele_64k.jpg
+map_Bump Mia_140016_BuddhaStele_64k_normal.jpg
+map_ao Mia_140016_BuddhaStele_64k_occlusion.jpg
+

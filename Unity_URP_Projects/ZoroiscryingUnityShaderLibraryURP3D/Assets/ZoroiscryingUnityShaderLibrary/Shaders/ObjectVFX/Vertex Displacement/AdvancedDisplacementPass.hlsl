@@ -221,6 +221,7 @@ half4 LitPassFragment(Varyings input) : SV_Target
     float emissionFactor = 0;
     float3 displacementAmplitude = input.normalWS * _DisplacementAmplitude * (1 - abs(dot(input.normalWS, float3(0,1,0))));
     float3 displacementDirection = float3(-0.5 * value_noise11(input.originalPositionWS.y * 0.5 + _Time.x * 1.0), 1, 0.2);
+    displacementDirection = TransformObjectToWorldDir(_DisplacementDirection);
     
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     //clip(dissolveFactor);

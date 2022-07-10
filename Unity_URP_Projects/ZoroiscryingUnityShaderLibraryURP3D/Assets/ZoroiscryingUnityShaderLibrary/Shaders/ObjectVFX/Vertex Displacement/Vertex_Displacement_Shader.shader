@@ -65,6 +65,8 @@ Shader "Custom/Object/Vertex_Displacement_Shader"
         _DisplaceColorBlendStrength("Displace Color Blend Strength", Float) = 0.2
         _DisplaceStrengthPower("Displace Strength Power", Float) = 4.0
         
+        _Seed("Random Seed", int) = 1
+        
         [Toggle(_SAMPLE_SINE)] _Sample_Sine ("Sample Sine", Float) = 0
         [Toggle(_SAMPLE_NOISE)] _Sample_Noise ("Sample Noise", Float) = 0
         [Toggle(_SAMPLE_OTHER)] _Sample_Other ("Sample Other", Float) = 0

@@ -20,7 +20,7 @@ float _AnimatedEmissionSpeed;
 TEXTURE2D(_DisplacementParallaxMap); SAMPLER(sampler_DisplacementParallaxMap);
 float4  _DisplacementParallaxMap_TexelSize;
 float _ParallaxStrength;
-// Shield hit effect - Distance, Min, Max, Null
+// Shield hit effect - Distance, Intensity, Null, Thickness
 half4 _ScanParameter;
 half4 _ScanPosition;
 // Depth awareness - Depthstrength, Min, Max, Power
@@ -144,7 +144,7 @@ Varyings UnlitPassVertex(Attributes input)
 
 half3 SampleRefraction(half2 positionSS, half2 refractionStrength, half3 normalVS, half depth)
 {
-    return SampleSceneColor(positionSS + half2(normalVS.x, normalVS.z) * 0.025);
+    return SampleSceneColor(positionSS + half2(normalVS.x, normalVS.z) * 0.025 * refractionStrength);
 }
 
 void ApplyPerPixelDisplacement(half3 viewDirTS, inout float2 uv)
@@ -174,7 +174,7 @@ half4 UnlitPassFragment(Varyings input) : SV_Target
     float surfaceDistanceToCam = length(GetCameraPositionWS().xyz - input.positionWS);
     surfaceDistanceToCam = length(input.positionVS);
     float sceneDepth = SampleSceneDepth(positionSS);
-    float sceneDistanceToCam = LinearEyeDepth(sceneDepth, _ZBufferParams) * length(input.positionVS/input.positionVS.z);
+    float sceneDistanceToCam = LinearEyeDepth(sceneDepth, _ZBufferParams) * length(input.positionVS / input.positionVS.z);
     float surfaceDistanceToScene = sceneDistanceToCam - surfaceDistanceToCam;
 
     // Edge strength by surface-scene distance detection
@@ -185,7 +185,7 @@ half4 UnlitPassFragment(Varyings input) : SV_Target
 
 // -- Animated emission control
     float animatedEmissionControlValue = (sin(_Time.x * 20) + 1)/2;
-    animatedEmissionControlValue = 0.95 - Smoothstep01((sin(_Time.x * 10)+1)*0.5) + 0.1;
+    animatedEmissionControlValue = 0.95 - Smoothstep01((sin(_Time.x * 10 * _AnimatedEmissionSpeed)+1)*0.5) + 0.1;
     
     // Antialiasing based on distance
     float controlValueInterval = 0.05 * pow(length(input.positionVS), 0.5);
@@ -210,21 +210,17 @@ half4 UnlitPassFragment(Varyings input) : SV_Target
     float hitRingTimer = _Time.y/1;
     float2 randomNoisePosOffset = value_noise21(floor(hitRingTimer) * 100 * 2) * 2 - 1;
     float3 hitPointPos = _ScanPosition.xyz + float3(randomNoisePosOffset.x, randomNoisePosOffset.y, 0) * 2;
-    half hitRingInterval = 0.05;
-    //hitPointPos = TransformObjectToWorld(hitPointPos);
+    half hitRingInterval = 0.05h * _ScanParameter.w;
     float surfaceDistanceFromHitPoint = distance(input.positionWS, hitPointPos);
-    float hitRingAppearDistance = hitRingInterval + (frac(hitRingTimer)) * 6 + uvNoise * 0.06;
+    float hitRingAppearDistance = hitRingInterval + (frac(hitRingTimer)) * _ScanParameter.x + uvNoise * 0.06;
     float hitRingStrength =
         smoothstep(hitRingAppearDistance - hitRingInterval, hitRingAppearDistance, surfaceDistanceFromHitPoint) -
             smoothstep(hitRingAppearDistance, hitRingAppearDistance + hitRingInterval, surfaceDistanceFromHitPoint);
-    //hitRingStrength = step(surfaceDistanceFromHitPoint, hitRingAppearDistance + hitRingInterval) - step(surfaceDistanceFromHitPoint, hitRingAppearDistance - hitRingInterval);
-    // hitRingInterval = 0.3;
     hitRingStrength *= Smootherstep01(1 - frac(hitRingTimer));
-    half3 hitRingEmissionColor = saturate(hitRingStrength) * _AnimatedEmissionColor;
+    half3 hitRingEmissionColor = saturate(hitRingStrength) * _AnimatedEmissionColor * _ScanParameter.y;
     
 // -- Refraction sample
-    //float3 normalVS =
-    float sgn = input.tangentWS.w;      // should be either +1 or -1
+    float sgn = input.tangentWS.w; // should be either +1 or -1
     float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
     half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
     float3 normalFromHeight = ReconstructNormalFromGrayScaleHeightTexture(
@@ -232,15 +228,15 @@ half4 UnlitPassFragment(Varyings input) : SV_Target
         _DisplacementParallaxMap_TexelSize.xy, uv, 6);
     float3 normalWSFromHeight = TransformTangentToWorld(normalFromHeight, tangentToWorld);
     
-    half3 refractionColor = SampleRefraction(positionSS, half2(1,1), TransformWorldToViewDir(normalWSFromHeight), surfaceDistanceToScene);
+    half3 refractionColor = SampleRefraction(positionSS, _SceneColorParameter.xy, TransformWorldToViewDir(normalWSFromHeight), surfaceDistanceToScene);
 
 // -- Fresnel Emission
-    float fresnelStrength = pow(1 - dot(input.normalWS, viewDirWS), 16);
+    float fresnelStrength = pow(1 - dot(input.normalWS, viewDirWS), _RimLightParameters.y);
     emissionColor *= pow(1 - dot(input.normalWS, viewDirWS), 4);
     
     half3 color = texColor.rgb * _BaseColor.rgb + emissionColor.rgb + animatedEmissionColor + hitRingEmissionColor
-                    + fresnelStrength * _AnimatedEmissionColor + refractionColor;
-    color = lerp(color, _EdgeEmissionColor, edgeStrength);
+                    + fresnelStrength * _EdgeEmissionColor * _RimLightParameters.x + refractionColor;
+    color = lerp(color, _EdgeEmissionColor * _DepthParameter.x, edgeStrength);
     
     half alpha = 1.0;
     half refractionAlpha = texColor.a * _BaseColor.a;

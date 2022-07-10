@@ -15,14 +15,19 @@ MonoBehaviour:
   version: 5
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: BasicVertexDisplacement_Noise_Unstable Energy
   m_Shader: {fileID: 4800000, guid: 1195989fece54d8b829dd786dd06daae, type: 3}
-  m_ShaderKeywords: _EMISSION _NORMALMAP _SAMPLE_UNSTABLE_ENERGY
+  m_ValidKeywords:
+  - _EMISSION
+  - _NORMALMAP
+  - _SAMPLE_UNSTABLE_ENERGY
+  m_InvalidKeywords:
+  - _SAMPLEMODE_NOISE
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -50,6 +55,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DisplaceColorRamp:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -124,6 +133,7 @@ Material:
     - _Sample_Other: 0
     - _Sample_Sine: 0
     - _Sample_Unstable_Energy: 1
+    - _Seed: 5
     - _Smoothness: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

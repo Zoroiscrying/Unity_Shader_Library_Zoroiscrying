@@ -15,14 +15,18 @@ MonoBehaviour:
   version: 5
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: AdvancedVertexDisplacement_Sine
   m_Shader: {fileID: 4800000, guid: ca0ec89663234aa3af8cd8e418b0cc5c, type: 3}
-  m_ShaderKeywords: _EMISSION _NORMALMAP _SAMPLE_NOISE
+  m_ValidKeywords:
+  - _EMISSION
+  - _NORMALMAP
+  - _SAMPLE_NOISE
+  m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -119,7 +123,7 @@ Material:
     - _ReceiveShadows: 1
     - _SampleFrequency: 4
     - _SampleMode: 0
-    - _SampleSpeed: 10
+    - _SampleSpeed: 1
     - _Sample_Noise: 1
     - _Sample_Other: 0
     - _Sample_Sine: 0
@@ -135,8 +139,8 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DisplaceColor: {r: 5.3403134, g: 5.3403134, b: 5.3403134, a: 1}
-    - _DisplacementAmplitude: {r: 0.03, g: 0.03, b: 0.03, a: 0}
-    - _DisplacementDirection: {r: 1, g: 1, b: 1, a: 0}
+    - _DisplacementAmplitude: {r: 1, g: 1, b: 1, a: 0}
+    - _DisplacementDirection: {r: 0, g: 1, b: 0, a: 0}
     - _EmissionColor: {r: 0.11320752, g: 0.11320752, b: 0.11320752, a: 0.26666668}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
