@@ -2,6 +2,8 @@ Shader "Custom/Skybox/StylizedSkybox"
 {
     Properties
     {
+        _SkyBoxRotX("Skybox Rotation X", Float) = 0.0
+        
         [Header(Sky color)]
         [HDR]_ColorTop("Color top", Color) = (1,1,1,1)
         [HDR]_ColorMiddle("Color middle", Color) = (1,1,1,1)
@@ -25,6 +27,9 @@ Shader "Custom/Skybox/StylizedSkybox"
         [Header(Stars)]
         [KeywordEnum(NOISE, TEXTURE)] _STAR_TYPE("Star Type",int) = 0
         _Stars("Stars", 2D) = "black" {}
+        _StarIntensityBase("Star Intensity Base", Float) = 0.0
+        _StarAppearPos("Star Appear Position Y", Float) = 0.5
+        _StarPosPower("Star Position Power Control", Float) = 1
         _StarsIntensity("Stars intensity", float) = 0
  
         [Header(Clouds)]

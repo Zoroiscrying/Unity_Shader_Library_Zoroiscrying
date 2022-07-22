@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7767777174406820822
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 5
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Shader Graphs_Coverage_Lit_Graph
+  m_Shader: {fileID: -6465566751694194690, guid: fc2c87e100a357e4f9eaad8725818660, type: 3}
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 2
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AO_Coverage:
+        m_Texture: {fileID: 2800000, guid: 70d031b77c55f82479c0a395e387ff47, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _AO_Surface:
+        m_Texture: {fileID: 2800000, guid: 880cea90eee6e2a45b84e7ac9c40c50c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Albedo_Coverage:
+        m_Texture: {fileID: 2800000, guid: 895ad9de1df6fa641ba214e72c471d01, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Albedo_Surface:
+        m_Texture: {fileID: 2800000, guid: 66c04b090adb548479728e33cf0fd2ed, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Normal_Coverage:
+        m_Texture: {fileID: 2800000, guid: 8eb417e096dce654e94854ef8e0315d7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Normal_Surface:
+        m_Texture: {fileID: 2800000, guid: 005ce1d92fcc45448a91f5b64880b4df, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Coverage_Sample_Scale: 1
+    - _Metallic_Coverage: 0
+    - _Metallic_Surface: 0.1
+    - _Noise_Strength: 0.1
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Smoothness_Coverage: 0.1
+    - _Smoothness_Surface: 0
+    - _Snow_Amount: 0.719
+    - _Snow_Power: 0.5
+    m_Colors:
+    - _Coverage_Direction: {r: 0, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []

@@ -99,9 +99,9 @@ half3 Lighting_Cel_Phong(CelShadingData celShadingData,
     // calculate rim light
     float NdotV = 1 - dot(normalWS, viewDirectionWS);
     float rimLightStrength = smoothstep(0.7, 0.8, NdotV);
-    
     // calculate diffuse
     half3 radiance = lightColor * (lightAttenuation);
+    
 #if _FACE_RENDERING
     lightDirectionWS.y = 0;
     lightDirectionWS = normalize(lightDirectionWS);
@@ -109,17 +109,24 @@ half3 Lighting_Cel_Phong(CelShadingData celShadingData,
     float shadowWeight = (celShadingData.ShadowWeight + NdotL) * 0.5 + 1.125;
     float shadowFactor = smoothstep(0.95, 1.05, shadowWeight - celShadingData.DiffuseLightCutOff);
     //half3 shallowShadowDiffuseColor = lerp(celShadingData.ShallowShadowColor, celShadingData.Albedo, shadowFactor);
+    //shallowShadowDiffuseColor = shadowFactor * celShadingData.Albedo;
+    #if RAMP_UV_Y_MAJOR
+    half2 rampUV = half2((celShadingData.RampTextureAxisAid_Y + 0.5) * 0.5, NdotL);
+    #else
     half2 rampUV = half2(NdotL, (celShadingData.RampTextureAxisAid_Y + 0.5) * 0.5);
+    #endif
+    
     //half2 rampUV2 = half2(min(NdotL, 0.5) * 2, (celShadingData.RampTextureAxisAid_Y + 0.5) * 0.5);
-    half3 shadowRampedColor = celShadingData.Albedo * SAMPLE_TEXTURE2D(_CharacterRampTexture, sampler_CharacterRampTexture, rampUV).rgb  * radiance * 0.5;
+    half3 shadowRampedColor = celShadingData.Albedo * SAMPLE_TEXTURE2D(_CharacterRampTexture, sampler_CharacterRampTexture, rampUV).rgb * _ShadowIntensity;
     //shallowShadowDiffuseColor *= SAMPLE_TEXTURE2D(_CharacterRampTexture, sampler_CharacterRampTexture, rampUV).rgb;
     half3 shallowShadowDiffuseColor = lerp(shadowRampedColor, celShadingData.Albedo, shadowFactor);
+    
     half3 phong = shallowShadowDiffuseColor * celShadingData.DiffuseLightMultiplier;
 
     // calculate specular
     float3 halfVec = SafeNormalize(float3(lightDirectionWS) + float3(viewDirectionWS));
     half NdotH = half(saturate(dot(normalWS, halfVec)));
-    half specularStrength = pow(NdotH, celShadingData.smoothness * celShadingData.SpecularStrength);
+    half specularStrength = pow(NdotH, celShadingData.smoothness * celShadingData.SpecularStrength) * celShadingData.SpecularDetailMask;
     
     #if _SMOOTH_STEP_LIGHT_EDGE
     half bandedSpecular = smoothstep(celShadingData.SpecularLightCutOff - 0.05, celShadingData.SpecularLightCutOff + 0.05, specularStrength);
@@ -127,31 +134,29 @@ half3 Lighting_Cel_Phong(CelShadingData celShadingData,
     half bandedSpecular = step(celShadingData.SpecularLightCutOff, specularStrength);
     #endif
     
-    half4 specularColor = half4(1,1,1,1);
+    half3 specularColor = lerp(half3(1,1,1), celShadingData.Albedo, celShadingData.SpecularDetailMask);
     phong += specularColor * bandedSpecular * celShadingData.SpecularLightMultiplier;
 
     rimLightStrength *= shadowFactor * smoothstep(0.9, 0.95, NdotL);
+    //return rimLightStrength * celShadingData.RimLightColor * 1;
+    return phong * radiance + celShadingData.Emission * celShadingData.EmissionLightMultiplier + rimLightStrength * celShadingData.RimLightColor;
     
-    return phong * radiance + rimLightStrength * celShadingData.RimLightColor;
 #else
     float NdotL = saturate(dot(normalWS, lightDirectionWS));
     float shadowWeight = (celShadingData.ShadowWeight + NdotL) * 0.5 + 1.125;
     float shadowFactor = smoothstep(0.95, 1.05, shadowWeight - celShadingData.DiffuseLightCutOff);
     //half3 shallowShadowDiffuseColor = lerp(celShadingData.ShallowShadowColor, celShadingData.Albedo, shadowFactor);
     //shallowShadowDiffuseColor = shadowFactor * celShadingData.Albedo;
+    #if RAMP_UV_Y_MAJOR
+    half2 rampUV = half2((celShadingData.RampTextureAxisAid_Y + 0.5) * 0.5, NdotL);
+    #else
     half2 rampUV = half2(NdotL, (celShadingData.RampTextureAxisAid_Y + 0.5) * 0.5);
+    #endif
     //half2 rampUV2 = half2(min(NdotL, 0.5) * 2, (celShadingData.RampTextureAxisAid_Y + 0.5) * 0.5);
-    half3 shadowRampedColor = celShadingData.Albedo * SAMPLE_TEXTURE2D(_CharacterRampTexture, sampler_CharacterRampTexture, rampUV).rgb * radiance * 0.5;
+    half3 shadowRampedColor = celShadingData.Albedo * SAMPLE_TEXTURE2D(_CharacterRampTexture, sampler_CharacterRampTexture, rampUV).rgb * _ShadowIntensity;
     //shallowShadowDiffuseColor *= SAMPLE_TEXTURE2D(_CharacterRampTexture, sampler_CharacterRampTexture, rampUV).rgb;
     half3 shallowShadowDiffuseColor = lerp(shadowRampedColor, celShadingData.Albedo, shadowFactor);
     
-    //#if _SMOOTH_STEP_LIGHT_EDGE
-    //half bandedNdotL =
-    //    smoothstep(celShadingData.DiffuseLightCutOff - 0.05, celShadingData.DiffuseLightCutOff + 0.05, NdotL);
-    //#else
-    //half bandedNdotL = 
-    //    step(celShadingData.DiffuseLightCutOff, NdotL);
-    //#endif
     half3 phong = shallowShadowDiffuseColor * celShadingData.DiffuseLightMultiplier;
 
     // calculate specular
@@ -188,7 +193,6 @@ half3 Lighting_Cel_Phong(CelShadingData celShadingData,
 ////////////////////////////////////////////////////////////////////////////////
 ///
 ///
-
 half4 CelShadingCharacter_NdotL_Rim(InputData inputData, CelShadingData celShadingData)
 {
     #if defined(DEBUG_DISPLAY)

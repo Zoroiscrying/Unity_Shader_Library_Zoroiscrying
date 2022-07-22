@@ -37,6 +37,7 @@ struct Varyings
 
 // per object data
 CBUFFER_START(UnityPerMaterial)
+float _ReflectionIntensity;
 // smoothness
 half _Roughness;
 float _FresnelPower;
@@ -59,8 +60,10 @@ float _FoamDistance;
 TEXTURE2D(_FoamTexture); SAMPLER(sampler_FoamTexture); float4 _FoamTexture_ST;
 // Color Control
 float _RefractionStrength;
+float _AbsorptionIntensity;
 float _AbsorptionDistance;
 float _AbsorptionFogDistance;
+float4 _ScatteringIntensityControl;
 float _ScatteringDistance;
 float _ScatteringFogDistance;
 

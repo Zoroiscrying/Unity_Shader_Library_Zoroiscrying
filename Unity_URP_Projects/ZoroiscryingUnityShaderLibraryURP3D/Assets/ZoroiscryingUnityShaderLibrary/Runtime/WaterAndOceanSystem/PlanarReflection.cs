@@ -228,10 +228,12 @@ public class PlanarReflection : MonoBehaviour
             const bool useHdr10 = true;
             const RenderTextureFormat hdrFormat = useHdr10 ? RenderTextureFormat.RGB111110Float : RenderTextureFormat.DefaultHDR;
             _reflectionTexture = RenderTexture.GetTemporary(res.x, res.y, 16,
-                GraphicsFormatUtility.GetGraphicsFormat(hdrFormat, true));
+                GraphicsFormatUtility.GetGraphicsFormat(hdrFormat, true), 4);
+            _reflectionTexture.useMipMap = true;
+            _reflectionTexture.autoGenerateMips = false;
         }
         _reflectionCamera.targetTexture =  _reflectionTexture;
-        _reflectionCamera.depthTextureMode = DepthTextureMode.None;
+        //_reflectionCamera.depthTextureMode = DepthTextureMode.None;
     }
 
     private int2 ReflectionResolution(Camera cam, float scale)
@@ -257,6 +259,7 @@ public class PlanarReflection : MonoBehaviour
         UniversalRenderPipeline.RenderSingleCamera(context, _reflectionCamera); // render planar reflections
 
         data.Restore(); // restore the quality settings
+        _reflectionTexture.GenerateMips();
         Shader.SetGlobalTexture(_planarReflectionTextureId, _reflectionTexture); // Assign texture to water shader
     }
 

@@ -3,7 +3,22 @@ guid: d88b5228c37fe8444986c0c4054328fe
 ModelImporter:
   serializedVersion: 21202
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: assets_textures_Avatar_Loli_Catalyst_Klee_Tex_Body_Diffuse.png
+    second: {fileID: 2100000, guid: 3f63a5e26a45770469e27d91ddbae5fa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: assets_textures_Avatar_Loli_Catalyst_Klee_Tex_Face_Diffuse.png
+    second: {fileID: 2100000, guid: ec8734d8bb1236a4fb41dc8d5a366800, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: assets_textures_Avatar_Loli_Catalyst_Klee_Tex_Hair_Diffuse.png
+    second: {fileID: 2100000, guid: 0e7508f053454664d9e4cc4f772eb048, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -16,8 +31,7 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 1
     motionNodeName: 
-    rigImportErrors: "Copied Avatar Rig Configuration mis-match. Transform hierarchy
-      does not match:\n\tTransform 'Boy:Hips' for human bone 'Hips' not found\n"
+    rigImportErrors: 
     rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
@@ -418,7 +432,7 @@ ModelImporter:
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
-  avatarSetup: 2
+  avatarSetup: 0
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   additionalBone: 0
   userData: 

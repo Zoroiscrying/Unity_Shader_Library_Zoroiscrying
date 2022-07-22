@@ -22,7 +22,7 @@
 // 
 // Worley & Perlin noise : https://www.shadertoy.com/view/3dVXDc
 
-// Value noise 1D
+// Value noise 1D [0, 1]
 float value_noise11(float x) {
 	float i = floor(x);
 	float f = frac(x);
@@ -193,7 +193,7 @@ float simplex_noise12(in float2 p)
 	float2  c = a - 1.0 + 2.0*K2;
 	float3  h = max( 0.5-float3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );
 	float3  n = h*h*h*h*float3( dot(a,hash22(i+0.0)), dot(b,hash22(i+o)), dot(c,hash22(i+1.0)));
-	return dot( n, float3(70.0, 70.0, 70.0));
+	return dot(n, float3(70.0, 70.0, 70.0));
 }
 
 // Spherical Noise https://stackoverflow.com/questions/17095571/coherent-spherical-noise

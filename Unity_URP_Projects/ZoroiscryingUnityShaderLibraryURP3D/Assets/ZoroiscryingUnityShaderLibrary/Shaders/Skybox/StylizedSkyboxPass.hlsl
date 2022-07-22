@@ -18,7 +18,7 @@ half4 SkyboxPassFragment (Varyings input) : SV_Target
 {
     // https://medium.com/@jannik_boysen/procedural-skybox-shader-137f6b0cb77c
     // Spherical UV, the U circle around the XZ plane, the V circle around the XY / ZY plane, reach -1 & 1 at bot & top
-    float2 uv = float2(atan2(input.uv.x, input.uv.z) / TWO_PI, asin(input.uv.y) / HALF_PI);
+    float2 uv = float2(atan2(input.uv.x, input.uv.z) / TWO_PI, asin(input.uv.y) / HALF_PI) + float2(_SkyBoxRotX, 0);
 
     // mid - 0.0 -> 0.5
     float middleThreshold = smoothstep(0.0, 0.5 - (1.0 - _MiddleSmoothness) / 2.0, input.uv.y - _MiddleOffset);
@@ -35,13 +35,18 @@ half4 SkyboxPassFragment (Varyings input) : SV_Target
     // --- Star ---
     #ifdef _STAR_TYPE_TEXTURE
     float star_tex = SAMPLE_TEXTURE2D(_Stars, sampler_Stars, (input.uv.xz / input.uv.y) * _Stars_ST.xy).x;
-    float stars = step(0.5, star_tex) * _StarsIntensity * saturate(-_MainLightPosition.y) * (1.0 - clouds);
+    float stars = step(0.5, star_tex) * _StarsIntensity * (saturate(-_MainLightPosition.y) + _StarIntensityBase) * (1.0 - clouds);
     #elif _STAR_TYPE_NOISE
     float2 plane_uv = (input.uv.xz / input.uv.y);
-    float3 stars_noise = (SAMPLE_TEXTURE2D(_Stars, sampler_Stars, plane_uv * _Stars_ST.xy).xyz + spherical_noise33(input.uv.xyz * 100 * _Stars_ST.x/10))/2;
-    float stars = saturate(step(0.5, dot(stars_noise, input.uv.xyz))) * _StarsIntensity * saturate(-_MainLightPosition.y) * (1.0 - clouds);
+    float3 stars_noise = normalize((SAMPLE_TEXTURE2D(_Stars, sampler_Stars, uv * _Stars_ST.xy + float2(_SkyBoxRotX, 0)).xyz + spherical_noise33(input.uv.xyz * 100 * _Stars_ST.x/10 + float3(_SkyBoxRotX, 0, 0))/2 + 0.5) - 1);
+    stars_noise = normalize(SAMPLE_TEXTURE2D(_Stars, sampler_Stars, uv * _Stars_ST.xy).xyz - ((spherical_noise33(input.uv.xyz * 100 * _Stars_ST.x/10 + float3(_SkyBoxRotX, 0, 0)))+1)/2);
+    stars_noise = SAMPLE_TEXTURE2D(_Stars, sampler_Stars, uv * _Stars_ST.xy).xyz;
+    stars_noise = spherical_noise33(input.uv.xyz * float3(200, 200, 200) + float3(_SkyBoxRotX, 0, 0));
+    stars_noise = simplex_noise12(uv * float2(314, 100) * 1.5);
+    float stars = saturate(step(0.75, saturate(dot(stars_noise, input.uv.xyz)))) * _StarsIntensity * (saturate(-_MainLightPosition.y) + _StarIntensityBase) * (1.0 - clouds);
+    stars = saturate(step(0.75, stars_noise)) * _StarsIntensity * (saturate(-_MainLightPosition.y) + _StarIntensityBase) * (1.0 - clouds);;
     #endif
-    stars *= smoothstep(0.5, 1.0 , input.uv.y); // only appear at the top part
+    stars *= pow(smoothstep(_StarAppearPos, 1.0 , uv.y), _StarPosPower); // only appear at the top part
 
     // --- Sun ---
     // SDF pointing at the sun's direction 
@@ -60,7 +65,7 @@ half4 SkyboxPassFragment (Varyings input) : SV_Target
     float moonPhaseSDF = distance(input.uv.xyz - float3(0.0, 0.0, 0.1) * _MoonPhase, -_MainLightPosition);
     float moon = step(moonSDF, _MoonSize);
     moon -= step(moonPhaseSDF, _MoonSize);
-    moon = saturate(moon * -_MainLightPosition.y - clouds); // the cloud will cover moon's light
+    moon = saturate(moon * -_MainLightPosition.y - clouds * 0.5f); // the cloud will cover moon's light
 
     // --- Cloud Detail --- 
     // creates a smooth transition for the clouds
@@ -76,11 +81,17 @@ half4 SkyboxPassFragment (Varyings input) : SV_Target
     // --- COMPOSITING --- 
     col = lerp(col, _SunColor, sun);
     // this creates the color of the clouds ahead of the sun
-    half4 cloudsCol = lerp(_CloudsColor, _CloudsColor + _SunColor, cloudSmooth * smoothstep(0.3, 0.0, sunSDF) * _SunCloudIntensity);
+    half4 cloudsCol = lerp(_CloudsColor, _CloudsColor * _SunColor, cloudSmooth * smoothstep(0.0, 0.3, sunSDF) * _SunCloudIntensity);
     col = lerp(col, cloudsCol, clouds);
     col += silverLining * _SunColor;
     col = lerp(col, _MoonColor, moon);
     col += stars;
+    //stars_noise = length(stars_noise) - 1;
+    //stars_noise = normalize(spherical_noise33(input.uv.xyz * 100 * _Stars_ST.x/10 + float3(_SkyBoxRotX, 0, 0)));
+    //stars_noise = SAMPLE_TEXTURE2D(_Stars, sampler_Stars, uv * _Stars_ST.xy + float2(_SkyBoxRotX, 0)).xyz;
+    //return half4(uv.x, uv.y, 0, 1);
+    //return half4(stars_noise, 1);
+    //return half4(input.uv.xyz, 1);
     return col;
 }
 

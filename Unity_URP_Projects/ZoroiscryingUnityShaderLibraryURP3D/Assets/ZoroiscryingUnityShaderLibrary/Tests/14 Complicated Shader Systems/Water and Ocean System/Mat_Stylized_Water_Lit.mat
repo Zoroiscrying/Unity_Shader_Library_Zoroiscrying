@@ -25,7 +25,7 @@ Material:
   m_ValidKeywords:
   - WAVE_ALPHA
   - _DISPLACEMENT_GERSTNER
-  - _REFLECTION_PROBES
+  - _REFLECTION_PLANAR
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -65,9 +65,9 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _FoamTexture:
-        m_Texture: {fileID: 2800000, guid: 8b1e8ac978be3cd4b8835b28b97ff4f4, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+        m_Texture: {fileID: 2800000, guid: 901a26c525396fe49b48c8472aa04621, type: 3}
+        m_Scale: {x: 0.2, y: 0.2}
+        m_Offset: {x: 0.01, y: 0.01}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -93,7 +93,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ScatteringRamp:
-        m_Texture: {fileID: 2800000, guid: eec983031c3494741b4a761d358b9d69, type: 3}
+        m_Texture: {fileID: 2800000, guid: 05f3b4795bd669a4c9c38b8b4f0a6bfb, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -114,8 +114,9 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AbsorptionDistance: 50
-    - _AbsorptionFogDistance: 1000
+    - _AbsorptionDistance: 6
+    - _AbsorptionFogDistance: 100
+    - _AbsorptionIntensity: 1
     - _AlphaClip: 0
     - _Amplitude: 1
     - _Blend: 0
@@ -129,24 +130,27 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _EnvironmentReflections: 1
-    - _FoamDistance: 0.5
+    - _FoamDistance: 4
     - _FresnelPower: 4
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
-    - _NormalAlphaStrength: 0
-    - _NormalBetaStrength: 0
+    - _NormalAlphaStrength: 0.25
+    - _NormalBetaStrength: 0.25
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
-    - _REFLECTION: 1
+    - _REFLECTION: 2
     - _RealTimeDisplacement: 0
     - _ReceiveShadows: 1
-    - _RefractionStrength: 1.1
-    - _Roughness: 0.005
-    - _ScatteringDistance: 100
+    - _ReflectionIntensity: 1
+    - _RefractionIntensity: 1
+    - _RefractionStrength: 0.35
+    - _Roughness: 0.226
+    - _ScatteringDistance: 10
     - _ScatteringFogDistance: 100
+    - _ScatteringIntensity: 1
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -168,6 +172,7 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _ScatteringIntensityControl: {r: 1, g: 1, b: 0.1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _Steepness: {r: 0.15, g: 0.05, b: 0.5, a: 0.2}
     - _WaveProperties: {r: -1, g: -2, b: 4, a: 2}

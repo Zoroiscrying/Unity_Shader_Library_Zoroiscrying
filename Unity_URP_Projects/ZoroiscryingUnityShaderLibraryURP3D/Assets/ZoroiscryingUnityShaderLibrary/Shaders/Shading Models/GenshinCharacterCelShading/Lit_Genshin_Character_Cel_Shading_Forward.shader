@@ -16,6 +16,7 @@ Shader "Custom/Shading Model/Lit_Genshin_Character_Cel_Shading_Forward"
         
         // Cel Shading Lit Properties
         // Light/shadow layering
+        [Toggle(RAMP_UV_Y_MAJOR)] _RampUVYMajor ("Ramp UV Y Major", Float) = 0
         [Toggle(_SMOOTH_STEP_LIGHT_EDGE)] _SmoothStepEdge ("Smooth Step Edge", Float) = 0
         [Toggle(_FACE_RENDERING)] _FaceRendering ("Face Rendering", Float) = 0
         _DiffuseEdgeSmoothness("DiffuseLightSmoothness", Range(0.0, 0.5)) = 0.05
@@ -32,7 +33,11 @@ Shader "Custom/Shading Model/Lit_Genshin_Character_Cel_Shading_Forward"
         
         // - Light maps - R->Specular Strength / G->Shadow Channel / B->Specular Detail / A->Ramp Texture Line Aid
         _CharacterLightMap("Character Light Map", 2D) = "white" {}
+        [Toggle(USE_CHARACTER_LIGHT_MAP)] _CharacterLightMapOn("Use Light Map", int) = 1
+        _CharacterLightParameter("Character Light Parameter", Vector) = (0.05, 0.0, 1.0, 0.5)
         _CharacterRampTexture("Character Ramp Texture", 2D) = "White" {}
+        
+        _ShadowIntensity("Shadow Intensity", Float) = 0.5
         
         // Outline
         _OutlinePixelWidth("Outline Pixel Width", Float) = 4
@@ -128,6 +133,8 @@ Shader "Custom/Shading Model/Lit_Genshin_Character_Cel_Shading_Forward"
             // Lit Cel Shading Keywords
             #pragma shader_feature_local _SMOOTH_STEP_LIGHT_EDGE
             #pragma shader_feature_local _FACE_RENDERING
+            #pragma shader_feature_local USE_CHARACTER_LIGHT_MAP
+            #pragma shader_feature_local RAMP_UV_Y_MAJOR
             
         
             #include "GenshinCharacterCelShadingLitInput.hlsl"

@@ -16,6 +16,7 @@ struct Varyings
 };
 
 CBUFFER_START(UnityPerMaterial)
+float _SkyBoxRotX;
 half4 _ColorBottom;
 half4 _ColorMiddle;
 half4 _ColorTop;
@@ -34,6 +35,9 @@ float _MoonPhase;
 
 // sampler2D _Stars;
 float4 _Stars_ST;
+float _StarIntensityBase;
+float _StarAppearPos;
+float _StarPosPower;
 float _StarsIntensity;
 
 //sampler2D _CloudsTexture;

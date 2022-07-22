@@ -10,6 +10,7 @@
 	Properties
 	{
 		[KeywordEnum(CUBEMAP, PROBES, PLANAR)] _REFLECTION ("Reflection Type", int) = 0 
+		_ReflectionIntensity("Reflection Intensity", float) = 1.0
 		
 		[Header(Roughness)]
         _Roughness ("Roughness", Range(0,1)) = 0.5
@@ -42,11 +43,17 @@
 		_FoamTexture("Foam Texture", 2D) = "white"{}
 		_FoamDistance("Foam Distance", Float) = 1.0
 		
-		[Header(Color Control)]
+		[Header(Refraction)]
 		_RefractionStrength("Refraction Strength", Range(-2, 2)) = 0.5
+		
+		[Header(Absorption)]
+		_AbsorptionIntensity("Absorption Intensity", Range(0, 1)) = 1.0
 		_AbsorptionDistance("Absorption Distance", Float) = 20.0
 		_AbsorptionFogDistance("Absorption Fog Distance", Float) = 40.0
 		_AbsorptionRamp("Absorption Ramp", 2D) = "white"{}
+		
+		[Header(Scattering)]
+		_ScatteringIntensityControl("Scattering Control: Height, Normal, Sun, Bubble", Vector) = (1.0, 1.0, 1.0, 1.0)
 		_ScatteringDistance("Scattering Distance", Float) = 20.0
 		_ScatteringFogDistance("Scattering Fog Distance", Float) = 40.0
 		_ScatteringRamp("Scattering Ramp", 2D) = "white"{}

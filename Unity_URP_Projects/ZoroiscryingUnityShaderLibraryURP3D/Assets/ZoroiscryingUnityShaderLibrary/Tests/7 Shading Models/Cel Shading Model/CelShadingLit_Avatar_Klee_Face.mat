@@ -23,6 +23,7 @@ Material:
   m_Name: CelShadingLit_Avatar_Klee_Face
   m_Shader: {fileID: 4800000, guid: 4b71d29ec7e84f38a94b2e38a7477566, type: 3}
   m_ValidKeywords:
+  - USE_CHARACTER_LIGHT_MAP
   - _FACE_RENDERING
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -103,6 +104,7 @@ Material:
     - _AlphaClip: 0
     - _Blend: 0
     - _BumpScale: 1
+    - _CharacterLightMapOn: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
@@ -125,8 +127,10 @@ Material:
     - _OutlinePixelWidth: 4
     - _Parallax: 0.02
     - _QueueOffset: 0
+    - _RampUVYMajor: 0
     - _ReceiveShadows: 1
     - _RimLightThickness: 0.6
+    - _ShadowIntensity: 0.5
     - _SmoothStepEdge: 0
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
@@ -141,6 +145,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CharacterLightParameter: {r: 0.05, g: 0, b: 1, a: 0.5}
     - _Color: {r: 0.9063317, g: 0.9063317, b: 0.9063317, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}

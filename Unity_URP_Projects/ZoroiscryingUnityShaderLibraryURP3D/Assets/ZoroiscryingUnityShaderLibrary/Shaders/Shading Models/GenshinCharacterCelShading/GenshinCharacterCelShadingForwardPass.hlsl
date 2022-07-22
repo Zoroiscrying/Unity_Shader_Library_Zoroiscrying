@@ -191,8 +191,8 @@ half4 LitPassFragment(Varyings input) : SV_Target
     half depth = Linear01Depth(input.positionCS.z, _ZBufferParams);
     half depthDiff = CalculateScreenSpaceDepthDifference_01Depth(depth, positionSS, normalSS.xy, _ScreenParams.zw * half2(2,2));
     
-    half4 color = CelShadingCharacter_ScreenSpaceDepthRim(inputData, celShadingData, depthDiff);
-    color = CelShadingCharacter_NdotL_Rim(inputData, celShadingData);
+    // half4 color = CelShadingCharacter_ScreenSpaceDepthRim(inputData, celShadingData, depthDiff);
+    half4 color = CelShadingCharacter_NdotL_Rim(inputData, celShadingData);
     
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
     color.a = 1.0;

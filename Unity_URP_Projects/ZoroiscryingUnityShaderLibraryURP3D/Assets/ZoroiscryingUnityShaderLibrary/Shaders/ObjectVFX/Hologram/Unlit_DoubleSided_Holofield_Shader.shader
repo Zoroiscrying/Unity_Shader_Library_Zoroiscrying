@@ -34,22 +34,22 @@
         _ParallaxStrength("Parallax Strength", Float) = 0.5
         
         // Shield hit effect
-        [Tooltip(Distance, Intensity, Null, Thickness)]_ScanParameter("Scan Parameter", Vector) = (1,1,1,1)
+        [Tooltip(Distance, Intensity, Null, Thickness)]_ScanParameter("Scan-Distance, Intensity, Null, Thickness", Vector) = (1,1,1,1)
         _ScanPosition("Scan position", Vector) = (0,0,0,0)
         
         // Depth awareness
         [HDR]_EdgeEmissionColor("Edge Emission Color", Color) = (1,1,1,1)
-        [Tooltip(Depthstrength, Min, Max, Power)]_DepthParameter("Depth Parameter", Vector) = (1,0,4,1)
+        [Tooltip(Depthstrength, Min, Max, Power)]_DepthParameter("Depth-Strengh, Min, Max, Power", Vector) = (1,0,4,1)
+        [Toggle(USE_WORLD_SPACE_EDGE_DETECTION)]_WorldSpaceEdgeDetect("World Space Edge Detect", int) = 0
         
         // Refraction / Distortion
-        [Tooltip(Refraction strength, Distortion strength)]_SceneColorParameter("SceneColor Parameter", Vector) = (1,1,1,1)
+        [Tooltip(Refraction strength, Distortion strength)]_SceneColorParameter("Scene-Refraction Strength, Distortion Strength", Vector) = (1,1,1,1)
         
         // Rim light
-        [Tooltip(Rim light intensity, Rim light power, null, null)]_RimLightParameters("Rim light parameter", Vector) = (1,1,1,1)
+        [Tooltip(Rim light intensity, Rim light power, null, null)]_RimLightParameters("Rim-Intensity, Power, Null, Null", Vector) = (1,1,1,1)
         
         // Back face rendering
-        [Tooltip(Backface emission strength, Backface edge color strength, Null, Null)]_BackfaceRenderingParameters("BF Parameters", Vector) = (1,1,1,1)
-       
+        [Tooltip(Backface emission strength, Backface edge color strength, Null, Null)]_BackfaceRenderingParameters("BackFace-Emission, Edge Color, Null, Null", Vector) = (1,1,1,1)
     }
 
     SubShader
@@ -81,6 +81,7 @@
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
             #pragma multi_compile _ DEBUG_DISPLAY
+            #pragma shader_feature USE_WORLD_SPACE_EDGE_DETECTION
 
             #pragma vertex UnlitPassVertex
             #pragma fragment UnlitPassFragment
@@ -114,6 +115,7 @@
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
             #pragma multi_compile _ DEBUG_DISPLAY
+            #pragma shader_feature USE_WORLD_SPACE_EDGE_DETECTION
 
             #pragma vertex UnlitPassVertex
             #pragma fragment UnlitPassFragment

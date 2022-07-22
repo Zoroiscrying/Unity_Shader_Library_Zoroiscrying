@@ -42,9 +42,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor.AssetCreation
             if ( tImporter != null )
             {
                 tImporter.textureType = TextureImporterType.Default;
-
                 tImporter.isReadable = true;
-
                 AssetDatabase.ImportAsset( path );
                 AssetDatabase.Refresh();
             }

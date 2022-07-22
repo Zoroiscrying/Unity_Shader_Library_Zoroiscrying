@@ -110,7 +110,7 @@ Material:
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DisplaceColorBlendStrength: 1
-    - _DisplaceStrengthPower: 3
+    - _DisplaceStrengthPower: 2
     - _DstBlend: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
@@ -121,9 +121,9 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _SampleFrequency: 4
+    - _SampleFrequency: 2
     - _SampleMode: 0
-    - _SampleSpeed: 1
+    - _SampleSpeed: 5
     - _Sample_Noise: 1
     - _Sample_Other: 0
     - _Sample_Sine: 0
@@ -138,9 +138,9 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _DisplaceColor: {r: 5.3403134, g: 5.3403134, b: 5.3403134, a: 1}
-    - _DisplacementAmplitude: {r: 1, g: 1, b: 1, a: 0}
-    - _DisplacementDirection: {r: 0, g: 1, b: 0, a: 0}
+    - _DisplaceColor: {r: 0, g: 0, b: 0, a: 0}
+    - _DisplacementAmplitude: {r: 0.2, g: 0.2, b: 0.2, a: 0}
+    - _DisplacementDirection: {r: -1, g: -1, b: -1, a: 0}
     - _EmissionColor: {r: 0.11320752, g: 0.11320752, b: 0.11320752, a: 0.26666668}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []

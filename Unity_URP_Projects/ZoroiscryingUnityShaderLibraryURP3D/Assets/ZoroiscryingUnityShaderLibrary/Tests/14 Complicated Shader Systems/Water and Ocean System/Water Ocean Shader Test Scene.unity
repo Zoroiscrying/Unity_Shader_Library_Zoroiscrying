@@ -953,7 +953,7 @@ Light:
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 5500
+  m_ColorTemperature: 5928
   m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
@@ -2558,13 +2558,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1929277020}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f54260e51ead4157a4c412e632813e83, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_settings:
-    m_ResolutionMultiplier: 1
+    m_ResolutionMultiplier: 0
     m_ClipPlaneOffset: 0.05
     m_ReflectLayers:
       serializedVersion: 2

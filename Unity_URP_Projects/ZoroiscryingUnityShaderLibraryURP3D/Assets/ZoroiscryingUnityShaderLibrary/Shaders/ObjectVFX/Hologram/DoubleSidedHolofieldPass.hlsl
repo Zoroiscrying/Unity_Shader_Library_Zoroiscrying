@@ -178,9 +178,14 @@ half4 UnlitPassFragment(Varyings input) : SV_Target
     float surfaceDistanceToScene = sceneDistanceToCam - surfaceDistanceToCam;
 
     // Edge strength by surface-scene distance detection
-    float uvNoise = (value_noise12(uv * 12 + _Time.x * 8) - 0.5) * 2;
+    float uvNoise = (value_noise12(uv * float2(16, 8) + _Time.x * _DepthParameter.x) - 0.5) * 2;
     float2 edgeDetectionBoundary = float2(_DepthParameter.y, _DepthParameter.z) + uvNoise * 0.25;
-    float edgeStrength = pow(saturate(1 - clamp((surfaceDistanceToScene - edgeDetectionBoundary.x)/ edgeDetectionBoundary.y, 0, 1)), _DepthParameter.w);
+    float edgeStrength = 0.0f;
+    #if USE_WORLD_SPACE_EDGE_DETECTION
+    edgeStrength = pow(Smootherstep01(1 - clamp((input.positionWS.y - edgeDetectionBoundary.x) / (edgeDetectionBoundary.y - edgeDetectionBoundary.x), 0 , 1)), _DepthParameter.w);
+    #else
+    edgeStrength = pow(Smootherstep01(1 - clamp((surfaceDistanceToScene - edgeDetectionBoundary.x)/ (edgeDetectionBoundary.y - edgeDetectionBoundary.x), 0, 1)), _DepthParameter.w);
+    #endif
     edgeStrength = saturate(edgeStrength);
 
 // -- Animated emission control

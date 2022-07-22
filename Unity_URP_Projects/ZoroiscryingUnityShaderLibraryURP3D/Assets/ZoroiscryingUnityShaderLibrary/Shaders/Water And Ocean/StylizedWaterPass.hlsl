@@ -6,6 +6,14 @@
 #include "../../ShaderLibrary/PlanarReflectionTexture.hlsl"
 #include "../../ShaderLibrary/WaveCalculation.hlsl"
 
+float SchlickFresnelReflectance(float NoV)
+{
+    // IOR of air = 1.0, water = 1.33
+    // Precalculated R = ((na - nw)/(na + nw))^2 = 0.02005931219
+    const float R = 0.02005931219f;
+    return R + (1 - R) * pow((1.0f - NoV), 5);
+}
+
 void WaterHeightCalculation(inout float3 positionWS, inout float3 tangentWS, inout float3 normalWS,
     inout float maxHeight, float3 movementAmp = float3(1, 1, 1))
 {
@@ -99,14 +107,14 @@ half3 SampleReflections(half3 normalWS, half3 viewDirectionWS, half2 screenUV, h
 
     // get the perspective projection
     float2 p11_22 = float2(unity_CameraInvProjection._11, unity_CameraInvProjection._22) * 10;
-    // conver the uvs into view space by "undoing" projection
+    // convert the uvs into view space by "undoing" projection
     float3 viewDir = -(float3((screenUV * 2 - 1) / p11_22, -1));
 
     half3 viewNormal = mul(normalWS, (float3x3)GetWorldToViewMatrix()).xyz;
     half3 reflectVector = reflect(-viewDir, viewNormal);
 
     half2 reflectionUV = screenUV + normalWS.zx * half2(0.02, 0.15);
-    reflection += SAMPLE_TEXTURE2D_LOD(_PlanarReflectionTexture, sampler_CameraOpaqueTexture, reflectionUV, 6 * roughness).rgb;//planar reflection
+    reflection += SAMPLE_TEXTURE2D_LOD(_PlanarReflectionTexture, planar_Trilinear_Clamp_Sampler, reflectionUV, 6 * roughness).rgb;//planar reflection
 
     #endif
     return reflection;
@@ -174,7 +182,7 @@ Varyings VertexToFragment(Attributes input)
     OUTPUT_SH(output.normalWS, output.vertexSH);
     #endif
 
-    output.vertexData.x = Smoothstep01(offsetAmount);
+    output.vertexData.x = offsetAmount;
 
     return output;    
 }
@@ -225,8 +233,9 @@ half3 ScatteringColor(float surface_to_scene_distance, float rampThreshold = 20.
     // 0 - 1 -> texture sample
     // > 1 -> fog
     half3 scatteringCol = SAMPLE_TEXTURE2D(_ScatteringRamp, sampler_ScatteringRamp, surface_to_scene_distance / rampThreshold);
-    half3 fogCol = SAMPLE_TEXTURE2D(_ScatteringRamp, sampler_ScatteringRamp, surface_to_scene_distance / rampThreshold);
-    return lerp(scatteringCol, fogCol, saturate(surface_to_scene_distance / (fogThreshold)));
+    //half3 fogCol = SAMPLE_TEXTURE2D(_ScatteringRamp, sampler_ScatteringRamp, surface_to_scene_distance / rampThreshold);
+    //return lerp(scatteringCol, fogCol, saturate(surface_to_scene_distance / (fogThreshold)));
+    return scatteringCol;
 }
 
 // At distance 0, absorption nearly happens, so tend to be white (not affecting the scene color)
@@ -239,7 +248,9 @@ half3 AbsorptionColor(float surface_to_scene_distance, float rampThreshold = 20.
 
 half3 CalculateRefraction(float2 sampleUV, float surface_to_scene_distance, out half3 absorptionColor, float rampThreshold = 20.0f, float fogThreshold = 40.0f)
 {
-    half3 sceneColor = SampleSceneColor(sampleUV);
+    //half3 sceneColor = SampleSceneColor(sampleUV);
+    half3 sceneColor = SAMPLE_TEXTURE2D_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(sampleUV),
+        surface_to_scene_distance / 20.0f * 6).rgb;
     absorptionColor = AbsorptionColor(surface_to_scene_distance, rampThreshold);
     half3 fogCol = SAMPLE_TEXTURE2D(_AbsorptionRamp, sampler_AbsorptionRamp, surface_to_scene_distance / rampThreshold);
     return lerp(sceneColor * absorptionColor, fogCol, saturate(surface_to_scene_distance / (fogThreshold)));
@@ -275,7 +286,8 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
         input.positionWS.xz * _FoamTexture_ST.xy + _Time.yy * _FoamTexture_ST.zw);
     float foamRoughness = 0.95f;
     // Foam Should be calculated before distorted (because foam exists above water surface)
-    float foamStrength = 1.0f - Smoothstep01(saturate(surfaceDistanceToSceneOrig / _FoamDistance));
+    // smoothstep(distance/slider, distance/slider2, foamColor.r)
+    float foamStrength = (1.0f - Smoothstep01(saturate(surfaceDistanceToSceneOrig / _FoamDistance))) * pow(foamColor.r, 1.0f);
     
     float2 refractUVOffset = mul((float3x3)GetWorldToHClipMatrix(), -normalWS).xz;
     //refractUVOffset = normalTS.xy;
@@ -296,7 +308,7 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     half3 absorptionColor = 0;
     half3 refraction = CalculateRefraction(positionSSDistorted,
         surfaceDistanceToSceneDistorted, absorptionColor, _AbsorptionDistance, _AbsorptionFogDistance);
-    refraction = lerp(refraction, 0, foamStrength);
+    refraction = lerp(refraction, 0, foamStrength) * _AbsorptionIntensity;
     
     // --- Colors, Sand Wetness -> Shore Color // Shore Depth -> Gradient Map
     float3 albedo = lerp(0, foamColor, foamStrength);
@@ -307,7 +319,9 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     float alpha = 1.0;
 
     // --- Lighting Calculation
-    float fresnel = pow(1.0 - saturate(dot(normalWS, normalize(viewDirectionWS))), _FresnelPower);
+    float fresnel = pow(1.0 - saturate(dot(normalWS, viewDirectionWS)), _FresnelPower);
+    fresnel = SchlickFresnelReflectance(saturate(dot(normalWS, viewDirectionWS)));
+    
     half3 GI = 0;
     half4 shadowMask = 1;
     #if defined(LIGHTMAP_ON)
@@ -320,13 +334,19 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     half shadow = mainLight.shadowAttenuation;
 
     // direct lighting == diffuse lighting
-    half3 directLighting = dot(mainLight.direction, normalWS) * mainLight.color * albedo * shadow;
+    half3 directLighting = dot(mainLight.direction, normalWS) * mainLight.color * shadow * _ScatteringIntensityControl.z;
     half3 sss = directLighting;
+    // disable sss for foam
+    half3 scatteringCol = ScatteringColor(surfaceDistanceToSceneDistorted, _ScatteringDistance, _ScatteringFogDistance);
+    float scatteringTerm =
+        _ScatteringIntensityControl.x * input.vertexData.x * Pow4(max(dot(viewDirectionWS, -mainLight.direction), 0.0f)) * (0.5f - 0.5f * dot(mainLight.direction, normalWS))
+     + _ScatteringIntensityControl.y * pow(max(dot(viewDirectionWS, normalWS), 0.0f), 2);
     sss +=
-        lerp(ScatteringColor(surfaceDistanceToSceneDistorted, _ScatteringDistance, _ScatteringFogDistance), 0, foamStrength) * (1 + GI);
+        lerp(scatteringCol, 0, foamStrength) * mainLight.color * scatteringTerm * (Smoothstep01(saturate(surfaceDistanceToSceneOrig / _FoamDistance)));
+    // + _ScatteringIntensityControl.w * bubble color * bubble density * sun color; // this is for controlling the color of the bubble
     // sss += saturate(pow(saturate(dot(viewDirectionWS, -mainLight.direction)) * input.vertexData.x, 4)) * mainLight.color * absorptionColor;
 
-    half3 reflection = SampleReflections(normalWS, viewDirectionWS.xyz, input.positionSS.xy, roughness);
+    half3 reflection = SampleReflections(normalWS, viewDirectionWS.xyz, input.positionSS.xy, roughness) * _ReflectionIntensity;
     
     BRDFData brdfData = (BRDFData)0;
     InitializeBRDFData(albedo, 0, 0, 1 - roughness, alpha, brdfData);
@@ -337,12 +357,17 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     {
         Light light = GetAdditionalLight(lightIndex, input.positionWS);
         spec += LightingPhysicallyBased(brdfData, light, input.normalWS, viewDirectionWS.xyz);
-        directLighting += light.distanceAttenuation * light.color * light.shadowAttenuation;
+        sss += light.distanceAttenuation * light.color * light.shadowAttenuation;
     }
     #endif
 
-    half3 comp = lerp(0.0, reflection, fresnel) + spec + sss + emission + refraction;
-    half3 color = refraction;
+    // refraction = environment lighting that hit the surface below and travels backward to the eye
+    // reflection = environment lighting that travels from the scene directly reflects to the eye
+    // spec = light source's direct reflected radiance
+    // sss = light source's radiance that goes below the water surface but came out before hitting the surface below
+    // emission = artistic control (simulates effects like glowing ocean caused by algae)
+    half3 comp = lerp(refraction, reflection, fresnel) * (1 + GI) + spec + sss + emission;
+    half3 color = fresnel;
     //return half4(color, alpha);
     return half4(comp, alpha);
 }

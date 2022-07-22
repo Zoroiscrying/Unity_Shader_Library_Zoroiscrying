@@ -93,6 +93,8 @@ struct Varyings
 #endif
     
     float4 positionCS               : SV_POSITION;
+
+    float2 glitchStrength : TEXCOORD12;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -172,11 +174,14 @@ Varyings LitPassVertex(Attributes input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     // Apply vertex displacement here
+    float worldSpaceSeed = Length2(TransformObjectToWorld(float3(0,0,0))) * 10227.0f;
     float glitchStep = 0.99 - 0.01 * (_DisplacementAmount - 0.5) * 2.0;
-    float glitchStrength = step(glitchStep, value_noise11(input.positionOS.z * 10.0 + _Time.x * 1000.0)) * _DisplacementStrength;
-    float distortionStrength = step(0.4, value_noise11(input.positionOS.z * 10.0 + _Time.x * 10.0 * _DisplacementSpeed)) * _DisplacementStrength * value_noise11(input.positionOS.z * 5.0);
-    input.positionOS.xyz += _DisplacementDirection.xyz * float3(value_noise11(_Time.x), value_noise11(_Time.y), value_noise11(_Time.x + 1955.5)) * (glitchStrength + distortionStrength);
-
+    float glitchStrength = smoothstep(glitchStep, glitchStep + 0.0001f, value_noise11(input.positionOS.y * 10.0 + _Time.y * 50.0 + worldSpaceSeed)) * _DisplacementStrength;
+    float glitchStrength2 = smoothstep(glitchStep, glitchStep + 0.0001f, value_noise11(input.positionOS.y * 10.0 + _Time.y * 50.0 + 15827.5f + worldSpaceSeed)) * _DisplacementStrength;
+    float distortionStrength = step(0.4, value_noise11(input.positionOS.y * 1.0 + _Time.x * 10.0 * _DisplacementSpeed)) * _DisplacementStrength * value_noise11(input.positionOS.z * 5.0);
+    input.positionOS.xyz += 4 * _DisplacementDirection.xyz * float3(value_noise11(_Time.x), value_noise11(_Time.y), value_noise11(_Time.x + 1955.5)) * (glitchStrength + distortionStrength + glitchStrength2);
+    output.glitchStrength = float2(glitchStrength, glitchStrength2);
+    
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
 
     // normalWS and tangentWS already normalize.
@@ -332,8 +337,12 @@ half4 LitPassFragment(Varyings input) : SV_Target
     
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(input.uv, surfaceData);
+    surfaceData.smoothness = 0.15f;
+    //surfaceData.albedo = lerp(surfaceData.albedo, half3(50, 0, 0), input.glitchStrength.x);
+    //surfaceData.albedo = lerp(surfaceData.albedo, half3(0, 0, 50), input.glitchStrength.y);
     surfaceData.emission += _ScanlineColor1 * scanlineEmissionStrength1;
     surfaceData.emission += _ScanlineColor2 * scanlineEmissionStrength2;
+    //surfaceData.emission += input.glitchStrength * half3(1, 0, 0);
     surfaceData.emission += _RimLightColor * rimLightStrength;
     
     InputData inputData;
@@ -354,6 +363,8 @@ half4 LitPassFragment(Varyings input) : SV_Target
     //half4 color = half4(surfaceData.emission + sceneColor, 1.0);
 
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
+    color.rgb = lerp(color.rgb, half3(2, 0, 0), input.glitchStrength.x);
+    color.rgb = lerp(color.rgb, half3(0, 0, 2), input.glitchStrength.y);
     //color.rgb = half3(input.screenPos, 0);
     color.a = OutputAlpha(color.a, _Surface);
     

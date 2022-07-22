@@ -30,6 +30,8 @@ half4 _RimLightColor;
 half _DiffuseLightMultiplier;
 half _SpecularLightMultiplier;
 half _EmissionLightMultiplier;
+half4 _CharacterLightParameter;
+half _ShadowIntensity;
 CBUFFER_END
 
 // NOTE: Do not ifdef the properties for dots instancing, but ifdef the actual usage.
@@ -141,10 +143,17 @@ inline void InitializeCelShadingData(float2 uv, out CelShadingData outSurfaceDat
     outSurfaceData.Albedo = albedoAlpha.rgb * _BaseColor.rgb;
     outSurfaceData.Emission = outSurfaceData.Albedo * albedoAlpha.a * 1.0;
 
+    #if USE_CHARACTER_LIGHT_MAP
     outSurfaceData.SpecularStrength = lightMapData.r;
     outSurfaceData.ShadowWeight = lightMapData.g;
     outSurfaceData.SpecularDetailMask = lightMapData.b;
     outSurfaceData.RampTextureAxisAid_Y = lightMapData.a;
+    #else
+    outSurfaceData.SpecularStrength = _CharacterLightParameter.r;
+    outSurfaceData.ShadowWeight = _CharacterLightParameter.g;
+    outSurfaceData.SpecularDetailMask = _CharacterLightParameter.b;
+    outSurfaceData.RampTextureAxisAid_Y = _CharacterLightParameter.a;
+    #endif
 
     outSurfaceData.metallic = 0.0;
     outSurfaceData.smoothness = SampleSmoothnessMap(uv);
