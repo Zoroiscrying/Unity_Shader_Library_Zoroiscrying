@@ -65,16 +65,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b6b8ba74ef24170b367711fc47762bd, type: 3}
   m_Name: Volumetric Light
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
     material: {fileID: 0}
     blurMaterial: {fileID: 0}
     renderPassEvent: 550
     downsampling: 2
     intensity: 1
-    scattering: -0.5
-    steps: 16
-    maxDistance: 50
+    scattering: 0.001
+    steps: 32
+    maxDistance: 128
     jitter: 50
     blurAmount: 100
     blurSamples: 7
@@ -98,7 +98,8 @@ MonoBehaviour:
   - {fileID: -1722949542219715278}
   - {fileID: 3870727231684889894}
   - {fileID: -1107971884674564332}
-  m_RendererFeatureMap: 3819534cb4e4cf3c14e890c7fe537890326d121a85da16e8264d02c3e895b735143fdaf070b19ff0
+  - {fileID: 2750153473043659980}
+  m_RendererFeatureMap: 3819534cb4e4cf3c14e890c7fe537890326d121a85da16e8264d02c3e895b735143fdaf070b19ff0ccfc924603822a26
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -135,6 +136,29 @@ MonoBehaviour:
   m_ClusteredRendering: 0
   m_TileSize: 32
   m_IntermediateTextureMode: 0
+--- !u!114 &2750153473043659980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1614fc811f8f184697d9bee70ab9fe5, type: 3}
+  m_Name: DecalRendererFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  m_Settings:
+    technique: 0
+    maxDrawDistance: 1000
+    dBufferSettings:
+      surfaceData: 2
+    screenSpaceSettings:
+      normalBlend: 0
+      useGBuffer: 1
+  m_CopyDepthPS: {fileID: 4800000, guid: d6dae50ee9e1bfa4db75f19f99355220, type: 3}
+  m_DBufferClear: {fileID: 4800000, guid: f056d8bd2a1c7e44e9729144b4c70395, type: 3}
 --- !u!114 &3870727231684889894
 MonoBehaviour:
   m_ObjectHideFlags: 0

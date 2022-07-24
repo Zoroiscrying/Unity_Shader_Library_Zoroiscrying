@@ -1,0 +1,115 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Sky 3
+  m_Shader: {fileID: 4800000, guid: 1c82af1dd8be5204b9183161be951e10, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CloudsTexture:
+        m_Texture: {fileID: 2800000, guid: e48a85f86d500c641832d2103817ccdd, type: 3}
+        m_Scale: {x: 3, y: 2}
+        m_Offset: {x: 0.65, y: 2.44}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Stars:
+        m_Texture: {fileID: 2800000, guid: 2bb27e58407ab344b84e3e73c89f0326, type: 3}
+        m_Scale: {x: 2, y: 2}
+        m_Offset: {x: 0, y: 0}
+    - _StarsTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _BumpScale: 1
+    - _CloudOffset: 0.07
+    - _CloudsBlend: 1
+    - _CloudsOffset: 0.1
+    - _CloudsSmoothness: 0.061
+    - _CloudsThreshold: 0.32
+    - _Cutoff: 0.5
+    - _DetailNormalMapScale: 1
+    - _DstBlend: 0
+    - _GlossMapScale: 1
+    - _Glossiness: 0.5
+    - _GlossyReflections: 1
+    - _Metallic: 0
+    - _MiddleOffset: -0.17
+    - _MiddleSmoothness: 1
+    - _Mode: 0
+    - _MoonPhase: 0.088
+    - _MoonSize: 0.025
+    - _OcclusionStrength: 1
+    - _PanningSpeedX: 0
+    - _PanningSpeedY: 0
+    - _Parallax: 0.02
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _StarsAmount: 0
+    - _StarsIntensity: 1
+    - _StarsSize: 0
+    - _SunCloudIntensity: 0.189
+    - _SunSize: 0.026
+    - _SunSmoothness: 0
+    - _TopOffset: -0.38
+    - _TopSmoothness: 1
+    - _UVSec: 0
+    - _ZWrite: 1
+    m_Colors:
+    - _CloudsColor: {r: 0.28164148, g: 0.34362918, b: 0.4203934, a: 0.55109745}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _ColorBottom: {r: 0.21427482, g: 0.13650961, b: 0.14540389, a: 1}
+    - _ColorMiddle: {r: 0.42259324, g: 0.27019337, b: 0.27194643, a: 1}
+    - _ColorTop: {r: 0.07619983, g: 0.14927825, b: 0.2554883, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _MoonColor: {r: 4, g: 4, b: 4, a: 1}
+    - _SunColor: {r: 1.6298695, g: 0.38604856, b: 0.30463353, a: 1}
+  m_BuildTextureStacks: []

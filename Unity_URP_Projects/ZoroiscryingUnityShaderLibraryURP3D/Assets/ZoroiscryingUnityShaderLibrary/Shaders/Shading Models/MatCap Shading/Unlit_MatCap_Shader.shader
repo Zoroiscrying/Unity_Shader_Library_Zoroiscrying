@@ -51,6 +51,10 @@ Shader "Custom/Shading Model/Unlit_Matcap_Shader"
             #pragma multi_compile _ DIRLIGHTMAP_COMBINED
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile _ _SHADOWS_SOFT // custom compile - soft shadow calculation
+            #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS // main light shadow
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE // main light shadow cascade
             #pragma multi_compile_fog
             #pragma multi_compile_fragment _ DEBUG_DISPLAY
         
@@ -82,8 +86,10 @@ Shader "Custom/Shading Model/Unlit_Matcap_Shader"
             struct Varyings
             {
                 float2 uv : TEXCOORD0;
+                float3 positionWS : TEXCOORD2;
                 float fogCoord : TEXCOORD1;
                 float4 positionCS : SV_POSITION;
+                float3 SH : TEXCOORD3;
             };
 
             Varyings MatCapPassVertex(Attributes input)
@@ -120,12 +126,18 @@ Shader "Custom/Shading Model/Unlit_Matcap_Shader"
                 output.viewDirWS = viewDirWS;
                 #endif
 
+                output.positionWS = vertexInput.positionWS;
+                OUTPUT_SH(TransformObjectToWorldNormal(input.normalOS), output.SH);
+
                 return output;
             }
 
             half4 MatCapPassFragment(Varyings input) : SV_Target
             {
-                return half4(SAMPLE_TEXTURE2D(_MatCapTexture, sampler_MatCapTexture, input.uv).xyz, 1.0);
+                Light mainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
+                half3 matCapCol = SAMPLE_TEXTURE2D(_MatCapTexture, sampler_MatCapTexture, input.uv).xyz;
+                //return mainLight.shadowAttenuation;
+                return half4(matCapCol * normalize(mainLight.color) * (mainLight.shadowAttenuation * mainLight.distanceAttenuation + input.SH), 1.0);
             }
             
             ENDHLSL

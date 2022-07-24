@@ -6,12 +6,17 @@
 #include "../../ShaderLibrary/PlanarReflectionTexture.hlsl"
 #include "../../ShaderLibrary/WaveCalculation.hlsl"
 
+float SampleSceneDepthCustom(float2 uv)
+{
+    return SAMPLE_TEXTURE2D_X(_CameraDepthTexture, planar_Trilinear_Clamp_Sampler, UnityStereoTransformScreenSpaceTex(uv)).r;
+}
+
 float SchlickFresnelReflectance(float NoV)
 {
     // IOR of air = 1.0, water = 1.33
     // Precalculated R = ((na - nw)/(na + nw))^2 = 0.02005931219
     const float R = 0.02005931219f;
-    return R + (1 - R) * pow((1.0f - NoV), 5);
+    return R + (1 - R) * pow((1.0f - NoV), _FresnelPower);
 }
 
 void WaterHeightCalculation(inout float3 positionWS, inout float3 tangentWS, inout float3 normalWS,
@@ -232,7 +237,7 @@ half3 ScatteringColor(float surface_to_scene_distance, float rampThreshold = 20.
 {
     // 0 - 1 -> texture sample
     // > 1 -> fog
-    half3 scatteringCol = SAMPLE_TEXTURE2D(_ScatteringRamp, sampler_ScatteringRamp, surface_to_scene_distance / rampThreshold);
+    half3 scatteringCol = SAMPLE_TEXTURE2D(_ScatteringRamp, ramp_Linear_Clamp_Sampler, surface_to_scene_distance / rampThreshold);
     //half3 fogCol = SAMPLE_TEXTURE2D(_ScatteringRamp, sampler_ScatteringRamp, surface_to_scene_distance / rampThreshold);
     //return lerp(scatteringCol, fogCol, saturate(surface_to_scene_distance / (fogThreshold)));
     return scatteringCol;
@@ -240,20 +245,25 @@ half3 ScatteringColor(float surface_to_scene_distance, float rampThreshold = 20.
 
 // At distance 0, absorption nearly happens, so tend to be white (not affecting the scene color)
 // At max distance, absorption would make less light appear back to the eye, thus turning to near black.
-// 
+// NOTE:: Remember to disable ramp texture mipmapping. 
 half3 AbsorptionColor(float surface_to_scene_distance, float rampThreshold = 20.0f)
 {
-    return SAMPLE_TEXTURE2D(_AbsorptionRamp, sampler_AbsorptionRamp, surface_to_scene_distance / rampThreshold);
+    return SAMPLE_TEXTURE2D(_AbsorptionRamp, ramp_Linear_Clamp_Sampler, surface_to_scene_distance / rampThreshold);
 }
 
 half3 CalculateRefraction(float2 sampleUV, float surface_to_scene_distance, out half3 absorptionColor, float rampThreshold = 20.0f, float fogThreshold = 40.0f)
 {
     //half3 sceneColor = SampleSceneColor(sampleUV);
+    surface_to_scene_distance = min(surface_to_scene_distance, _ProjectionParams.z);
     half3 sceneColor = SAMPLE_TEXTURE2D_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, UnityStereoTransformScreenSpaceTex(sampleUV),
         surface_to_scene_distance / 20.0f * 6).rgb;
     absorptionColor = AbsorptionColor(surface_to_scene_distance, rampThreshold);
-    half3 fogCol = SAMPLE_TEXTURE2D(_AbsorptionRamp, sampler_AbsorptionRamp, surface_to_scene_distance / rampThreshold);
-    return lerp(sceneColor * absorptionColor, fogCol, saturate(surface_to_scene_distance / (fogThreshold)));
+    //absorptionColor = lerp(float3(0.2f, 0.2f, 0.6f), float3(0.3f, 0.3f, 0.9f), saturate(surface_to_scene_distance / rampThreshold));
+    //half3 fogCol = SAMPLE_TEXTURE2D(_AbsorptionRamp, ramp_Bilinear_Clamp_Sampler, surface_to_scene_distance / rampThreshold);
+    half3 fogCol = absorptionColor;
+    //fogCol = half3(1,1,1);
+    // bigger distance, more fog.
+    return lerp(sceneColor * absorptionColor, fogCol, saturate(surface_to_scene_distance / fogThreshold));
 }
 
 float4 StylizedWaterPassFragment(Varyings input) : SV_Target
@@ -261,6 +271,7 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     // --- Parameters Used For Shading
     // Don't use GetWorldSpaceViewDirection function!
     float3 viewDirectionWS = SafeNormalize(_WorldSpaceCameraPos - input.positionWS);
+    input.positionSS.xy = ComputeNormalizedDeviceCoordinates(input.positionWS, unity_MatrixVP);
 
     // --- Normal Calculation
     // Interpolated directions need to be normalized again.
@@ -282,17 +293,20 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     float surfaceDistanceToSceneOrig = sceneDistanceToCam - surfaceDistanceToCam;
     
     // --- Foam Calculation
-    half3 foamColor = SAMPLE_TEXTURE2D(_FoamTexture, sampler_FoamTexture,
-        input.positionWS.xz * _FoamTexture_ST.xy + _Time.yy * _FoamTexture_ST.zw);
-    float foamRoughness = 0.95f;
+    half3 foamControl = SAMPLE_TEXTURE2D(_FoamTexture, sampler_FoamTexture,
+        input.positionWS.xz * _FoamTexture_ST.xy + _Time.yy * _FoamTexture_ST.zw) * _FoamColor.xyz * _FoamColor.a;
+    float foamRoughness = 1.0f;
     // Foam Should be calculated before distorted (because foam exists above water surface)
     // smoothstep(distance/slider, distance/slider2, foamColor.r)
-    float foamStrength = (1.0f - Smoothstep01(saturate(surfaceDistanceToSceneOrig / _FoamDistance))) * pow(foamColor.r, 1.0f);
+    float foamLine = 1.0f - saturate(surfaceDistanceToSceneOrig / _FoamDistance);
+    float foamStrength = (1.0f - saturate(surfaceDistanceToSceneOrig / _FoamDistance)) * pow(foamControl.r, 1.0f);
+    foamStrength = lerp(foamStrength, foamLine, 0.5f);
+    foamStrength = saturate(smoothstep(0.3f, 0.31f, foamStrength));
     
     float2 refractUVOffset = mul((float3x3)GetWorldToHClipMatrix(), -normalWS).xz;
     //refractUVOffset = normalTS.xy;
     refractUVOffset.y *= _CameraDepthTexture_TexelSize.z * abs(_CameraDepthTexture_TexelSize.y); // squaring the offset
-    float2 positionSSDistorted = input.positionSS + refractUVOffset.xy / input.positionSS.w * _RefractionStrength;
+    float2 positionSSDistorted = input.positionSS + refractUVOffset.xy * saturate(surfaceDistanceToSceneOrig / 10.0f) * _RefractionStrength;
     
     // --- Depth Calculation via Distorted UV
     float sceneDepth = SampleSceneDepth(positionSSDistorted);
@@ -308,14 +322,16 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     half3 absorptionColor = 0;
     half3 refraction = CalculateRefraction(positionSSDistorted,
         surfaceDistanceToSceneDistorted, absorptionColor, _AbsorptionDistance, _AbsorptionFogDistance);
-    refraction = lerp(refraction, 0, foamStrength) * _AbsorptionIntensity;
+    //refraction = AbsorptionColor(surfaceDistanceToSceneOrig);
+    //refraction = lerp(refraction, 0, foamStrength) * _AbsorptionIntensity;
     
     // --- Colors, Sand Wetness -> Shore Color // Shore Depth -> Gradient Map
-    float3 albedo = lerp(0, foamColor, foamStrength);
+    float3 albedo = lerp(0, _FoamColor.rgb, foamStrength);
     float3 emission = 0;
 
     // --- Smoothness
     float roughness = lerp(_Roughness, foamRoughness, foamStrength);
+    roughness = lerp(roughness, 0.8f, saturate(surfaceDistanceToCam / 500.0f));
     float alpha = 1.0;
 
     // --- Lighting Calculation
@@ -339,18 +355,30 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     // disable sss for foam
     half3 scatteringCol = ScatteringColor(surfaceDistanceToSceneDistorted, _ScatteringDistance, _ScatteringFogDistance);
     float scatteringTerm =
-        _ScatteringIntensityControl.x * input.vertexData.x * Pow4(max(dot(viewDirectionWS, -mainLight.direction), 0.0f)) * (0.5f - 0.5f * dot(mainLight.direction, normalWS))
-     + _ScatteringIntensityControl.y * pow(max(dot(viewDirectionWS, normalWS), 0.0f), 2);
+        _ScatteringIntensityControl.x * input.vertexData.x *
+            Pow4(saturate(dot(viewDirectionWS, -mainLight.direction))) * (0.5f - 0.5f * dot(mainLight.direction, normalWS))
+     + _ScatteringIntensityControl.y * pow(saturate(dot(viewDirectionWS, normalWS)), 2);
     sss +=
-        lerp(scatteringCol, 0, foamStrength) * mainLight.color * scatteringTerm * (Smoothstep01(saturate(surfaceDistanceToSceneOrig / _FoamDistance)));
+        saturate(lerp(scatteringCol, GI, foamStrength)) * mainLight.color * scatteringTerm * (Smoothstep01(saturate(surfaceDistanceToSceneOrig / _FoamDistance)));
     // + _ScatteringIntensityControl.w * bubble color * bubble density * sun color; // this is for controlling the color of the bubble
     // sss += saturate(pow(saturate(dot(viewDirectionWS, -mainLight.direction)) * input.vertexData.x, 4)) * mainLight.color * absorptionColor;
-
+    
     half3 reflection = SampleReflections(normalWS, viewDirectionWS.xyz, input.positionSS.xy, roughness) * _ReflectionIntensity;
     
     BRDFData brdfData = (BRDFData)0;
     InitializeBRDFData(albedo, 0, 0, 1 - roughness, alpha, brdfData);
-    half3 spec = DirectBRDF(brdfData, normalWS, mainLight.direction, viewDirectionWS, false) * shadow * mainLight.color;
+    half3 spec = 0;
+    #if STYLIZED_SPECULAR
+    half specularCheck = 1.0f - roughness/2.0f;
+    spec =
+        smoothstep(specularCheck, specularCheck+0.05f, DirectBRDF(brdfData, normalWS, mainLight.direction, viewDirectionWS, false))
+    * shadow * mainLight.color;
+    #else
+    spec =
+        DirectBRDF(brdfData, normalWS, mainLight.direction, viewDirectionWS, false)
+    * shadow * mainLight.color;
+    #endif
+
     #ifdef _ADDITIONAL_LIGHTS
     uint pixelLightCount = GetAdditionalLightsCount();
     for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
@@ -366,9 +394,10 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     // spec = light source's direct reflected radiance
     // sss = light source's radiance that goes below the water surface but came out before hitting the surface below
     // emission = artistic control (simulates effects like glowing ocean caused by algae)
-    half3 comp = lerp(refraction, reflection, fresnel) * (1 + GI) + spec + sss + emission;
-    half3 color = fresnel;
-    //return half4(color, alpha);
+    half3 comp = lerp(refraction, reflection, fresnel * _ReflectionIntensity) + spec + sss + emission;
+    //half3 color = refraction;
+    //return half4(color, 1.0);
+    //return smoothstep(1000, 100000, surfaceDistanceToSceneDistorted);
     return half4(comp, alpha);
 }
 

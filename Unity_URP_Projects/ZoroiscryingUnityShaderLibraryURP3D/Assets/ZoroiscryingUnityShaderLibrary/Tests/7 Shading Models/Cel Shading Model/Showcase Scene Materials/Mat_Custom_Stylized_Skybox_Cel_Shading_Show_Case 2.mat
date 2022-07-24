@@ -32,8 +32,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _CloudsTexture:
-        m_Texture: {fileID: 2800000, guid: 172168e5da7da37498f765906dafbb18, type: 3}
-        m_Scale: {x: 3, y: 1}
+        m_Texture: {fileID: 2800000, guid: 7c4f6326b14771943beaa120db350eed, type: 3}
+        m_Scale: {x: 6, y: 3}
         m_Offset: {x: 0.04, y: 0.38}
     - _DetailAlbedoMap:
         m_Texture: {fileID: 0}
@@ -94,8 +94,8 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _CloudsSmoothness: 0.629
-    - _CloudsThreshold: 0.096
+    - _CloudsSmoothness: 0.392
+    - _CloudsThreshold: 0.033
     - _Cull: 2
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
@@ -136,7 +136,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _CloudsColor: {r: 0.7490196, g: 0.15686275, b: 0, a: 1}
+    - _CloudsColor: {r: 1, g: 0.91348416, b: 0.89056605, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _ColorBottom: {r: 0, g: 0, b: 0, a: 1}
     - _ColorMiddle: {r: 0.08627451, g: 0.096644945, b: 0.11372549, a: 1}

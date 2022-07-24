@@ -229,7 +229,7 @@ half4 LitPassFragment(Varyings input) : SV_Target
         _DiffuseLightCutOff,_SpecularLightCutOff,
         _DiffuseBandNumber,_SpecularBandNumber,
         _DiffuseEdgeSmoothness, _SpecularEdgeSmoothness, _SpecularStrengthMultiplier,
-        0.5, half3(1,1,1), SampleHalfToneTexture(input.halfToneUV),
+        _RimLightThickness, _RimLightColor, SampleHalfToneTexture(input.halfToneUV),
         _SpecularColor, _ShadowColor,
         nprShadingData);
     

@@ -52,11 +52,11 @@ half4 SkyboxPassFragment (Varyings input) : SV_Target
     // SDF pointing at the sun's direction 
     float sunSDF = distance(input.uv.xyz, _MainLightPosition); // unit sphere distance (max is 2)
     #ifdef _SUN_TYPE_A
-    float sun = max(clouds * _CloudsColor.a, smoothstep(0, sunSDF, _SunSize)); // the sun can affect cloud color
+    float sun = max(clouds * _CloudsColor.a, smoothstep(0, _SunSize, sunSDF)); // the original calculation is wrong (smoothstep(0, sunSDF, _SunSize));
     #elif _SUN_TYPE_B
-    float sun = max(clouds * _CloudsColor.a, 1 - smoothstep(0, _SunSize, sunSDF)); // this creates a more crispy look
+    float sun = max(clouds * _CloudsColor.a, smoothstep(0, _SunSize, sunSDF)); // to be coded
     #else
-    float sun = max(clouds * _CloudsColor.a, 1 - smoothstep(0, _SunSize, sunSDF));
+    float sun = max(clouds * _CloudsColor.a, smoothstep(0, _SunSize, sunSDF));
     #endif
 
     // --- Moon --- 
@@ -65,7 +65,7 @@ half4 SkyboxPassFragment (Varyings input) : SV_Target
     float moonPhaseSDF = distance(input.uv.xyz - float3(0.0, 0.0, 0.1) * _MoonPhase, -_MainLightPosition);
     float moon = step(moonSDF, _MoonSize);
     moon -= step(moonPhaseSDF, _MoonSize);
-    moon = saturate(moon * -_MainLightPosition.y - clouds * 0.5f); // the cloud will cover moon's light
+    moon = saturate(moon * -_MainLightPosition.y - clouds * 0.25f); // the cloud will cover moon's light
 
     // --- Cloud Detail --- 
     // creates a smooth transition for the clouds
@@ -79,9 +79,9 @@ half4 SkyboxPassFragment (Varyings input) : SV_Target
     silverLining *=  smoothstep(_SunSize * 3.0, 0.0, sunSDF) * _CloudsColor.a;
 
     // --- COMPOSITING --- 
-    col = lerp(col, _SunColor, sun);
+    col = lerp(_SunColor, col, sun); // 
     // this creates the color of the clouds ahead of the sun
-    half4 cloudsCol = lerp(_CloudsColor, _CloudsColor * _SunColor, cloudSmooth * smoothstep(0.0, 0.3, sunSDF) * _SunCloudIntensity);
+    half4 cloudsCol = lerp(_CloudsColor, _CloudsColor * _SunColor, cloudSmooth * smoothstep(0.3, 0.0, sunSDF) * _SunCloudIntensity);
     col = lerp(col, cloudsCol, clouds);
     col += silverLining * _SunColor;
     col = lerp(col, _MoonColor, moon);
@@ -92,6 +92,7 @@ half4 SkyboxPassFragment (Varyings input) : SV_Target
     //return half4(uv.x, uv.y, 0, 1);
     //return half4(stars_noise, 1);
     //return half4(input.uv.xyz, 1);
+    //return clouds;
     return col;
 }
 

@@ -13,6 +13,7 @@
 		_ReflectionIntensity("Reflection Intensity", float) = 1.0
 		
 		[Header(Roughness)]
+		[Toggle(STYLIZED_SPECULAR)] _StylizedSpecular("Specular Stylized", int) = 0
         _Roughness ("Roughness", Range(0,1)) = 0.5
         _FresnelPower("Fresnel Power", Range(0, 32)) = 4
 		
@@ -40,6 +41,7 @@
 		_Steepness ("Steepness Prime Alpha Beta C", Vector) = (0.5, 0.5, 0.25, 0.25)
 		
 		[Header(Foam Control)]
+		_FoamColor("Foam Control Color", Color) = (1,1,1,1)
 		_FoamTexture("Foam Texture", 2D) = "white"{}
 		_FoamDistance("Foam Distance", Float) = 1.0
 		
@@ -110,6 +112,7 @@
 			#pragma shader_feature __ WAVE_ALPHA
 			#pragma shader_feature __ WAVE_BETA
 			#pragma shader_feature __ WAVE_C
+			#pragma shader_feature STYLIZED_SPECULAR
 
 			#define PATCH_FUNCTION "patchDistanceFunction_Variable_WS"
 			#define TESSELLATION_AFFECT_POSITION_OS

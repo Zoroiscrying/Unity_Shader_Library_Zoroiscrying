@@ -11,7 +11,7 @@ Material:
   m_Shader: {fileID: 4800000, guid: 938f3f28d28f4829a108f99e74b6cc10, type: 3}
   m_ValidKeywords:
   - _STAR_TYPE_NOISE
-  - _SUN_TYPE_B
+  - _SUN_TYPE_A
   m_InvalidKeywords:
   - _STAR_TYPE_A
   m_LightmapFlags: 4
@@ -32,9 +32,9 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _CloudsTexture:
-        m_Texture: {fileID: 2800000, guid: 172168e5da7da37498f765906dafbb18, type: 3}
-        m_Scale: {x: 3.14, y: 1}
-        m_Offset: {x: 0, y: 0}
+        m_Texture: {fileID: 2800000, guid: 7c4f6326b14771943beaa120db350eed, type: 3}
+        m_Scale: {x: 3, y: 2}
+        m_Offset: {x: 0.65, y: 2.44}
     - _DetailAlbedoMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -94,8 +94,8 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _CloudsSmoothness: 0.549
-    - _CloudsThreshold: 0.174
+    - _CloudsSmoothness: 0.163
+    - _CloudsThreshold: 0.26
     - _Cull: 2
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
@@ -106,37 +106,41 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
-    - _MiddleOffset: -0.14
+    - _MiddleOffset: -0.13
     - _MiddleSmoothness: 1
-    - _MoonPhase: 0.192
-    - _MoonSize: 0.038
+    - _MoonPhase: 0.061
+    - _MoonSize: 0.025
     - _OcclusionStrength: 1
-    - _PanningSpeedX: 0.001
-    - _PanningSpeedY: 0.001
+    - _PanningSpeedX: 0.0001
+    - _PanningSpeedY: 0
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _STAR_TYPE: 0
-    - _SUN_TYPE: 1
+    - _SUN_TYPE: 0
+    - _SkyBoxRotX: 0
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _StarAppearPos: 0.31
+    - _StarIntensityBase: 0
+    - _StarPosPower: 0.75
     - _StarsIntensity: 10
-    - _SunCloudIntensity: 0.472
-    - _SunSize: 0.047
+    - _SunCloudIntensity: 0.196
+    - _SunSize: 0.052
     - _Surface: 0
-    - _TopOffset: 0
+    - _TopOffset: -0.38
     - _TopSmoothness: 1
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _CloudsColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CloudsColor: {r: 0.1811143, g: 0.19416638, b: 0.23584908, a: 0.5764706}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorBottom: {r: 0.18867922, g: 0.18867922, b: 0.18867922, a: 1}
-    - _ColorMiddle: {r: 0.18867922, g: 0.18867922, b: 0.18867922, a: 1}
-    - _ColorTop: {r: 0.254717, g: 0.254717, b: 0.254717, a: 1}
+    - _ColorBottom: {r: 0.066037714, g: 0.025792085, b: 0.025792085, a: 1}
+    - _ColorMiddle: {r: 0.1792453, g: 0.078818835, b: 0.06662513, a: 1}
+    - _ColorTop: {r: 0.045995016, g: 0.08076672, b: 0.16037738, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _MoonColor: {r: 12.295434, g: 14.259475, b: 13.692482, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}

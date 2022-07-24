@@ -42,8 +42,9 @@ float _ReflectionIntensity;
 half _Roughness;
 float _FresnelPower;
 // textures
-TEXTURE2D(_AbsorptionRamp); SAMPLER(sampler_AbsorptionRamp); float4 _AbsorptionRamp_ST;
-TEXTURE2D(_ScatteringRamp); SAMPLER(sampler_ScatteringRamp); float4 _ScatteringRamp_ST;
+SamplerState ramp_Linear_Clamp_Sampler;
+TEXTURE2D(_AbsorptionRamp); float4 _AbsorptionRamp_ST;
+TEXTURE2D(_ScatteringRamp); float4 _ScatteringRamp_ST;
 float _NormalAlphaStrength;
 TEXTURE2D(_NormalMapAlpha); SAMPLER(sampler_NormalMapAlpha); float4 _NormalMapAlpha_ST;
 float _NormalBetaStrength;
@@ -56,6 +57,7 @@ float4 _WaveProperties_C;
 float4 _Amplitude;
 float4 _Steepness;
 // Foam Control
+half4 _FoamColor;
 float _FoamDistance;
 TEXTURE2D(_FoamTexture); SAMPLER(sampler_FoamTexture); float4 _FoamTexture_ST;
 // Color Control

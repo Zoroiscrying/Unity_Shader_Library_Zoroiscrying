@@ -15,7 +15,7 @@ MonoBehaviour:
   active: 0
   exposure:
     m_OverrideState: 1
-    m_Value: 0.8
+    m_Value: 0.74
   density:
     m_OverrideState: 1
     m_Value: 1
@@ -27,7 +27,7 @@ MonoBehaviour:
     m_Value: 0.25
   lightColor:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 0.9320519, b: 0.56037736, a: 1}
+    m_Value: {r: 1, g: 0.9418632, b: 0.61698115, a: 1}
 --- !u!114 &-4179492388291730111
 MonoBehaviour:
   m_ObjectHideFlags: 3

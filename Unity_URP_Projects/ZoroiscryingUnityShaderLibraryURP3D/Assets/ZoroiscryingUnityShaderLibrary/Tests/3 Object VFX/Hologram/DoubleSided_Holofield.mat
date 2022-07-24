@@ -135,6 +135,7 @@ Material:
     - _SrcBlend: 1
     - _Surface: 1
     - _WorkflowMode: 1
+    - _WorldSpaceEdgeDetect: 0
     - _ZWrite: 0
     m_Colors:
     - _AnimatedEmissionColor: {r: 11.984314, g: 10.164706, b: 0, a: 1}

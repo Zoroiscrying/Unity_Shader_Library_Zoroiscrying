@@ -15,15 +15,21 @@ MonoBehaviour:
   version: 5
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: NPRShadingMat 1
   m_Shader: {fileID: 4800000, guid: 2f8c545123a74ce0b388d2379c36456d, type: 3}
-  m_ShaderKeywords: _DIFFUSESHADEMODE_HALFTONE _METALLICSPECGLOSSMAP _NORMALMAP _OCCLUSIONMAP
-    _SCREEN_SPACE_HALFTONE _SPECULARSHADEMODE_SHARP
+  m_ValidKeywords:
+  - _DIFFUSESHADEMODE_HALFTONE
+  - _METALLICSPECGLOSSMAP
+  - _NORMALMAP
+  - _OCCLUSIONMAP
+  - _SCREEN_SPACE_HALFTONE
+  - _SPECULARSHADEMODE_SHARP
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -60,7 +66,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _HalfToneTexture:
         m_Texture: {fileID: 2800000, guid: 901dec0d95bc9ca4987928af58f67ab6, type: 3}
-        m_Scale: {x: 256, y: 128}
+        m_Scale: {x: 512, y: 256}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
@@ -134,11 +140,11 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.6415094, g: 0.63787824, b: 0.63787824, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
-    - _ShadowColor: {r: 1, g: 0, b: 0.8606558, a: 1}
+    - _ShadowColor: {r: 0.3962264, g: 0.0014951645, b: 0.34049973, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _SpecularColor: {r: 0.19028097, g: 1, b: 0.07924521, a: 1}
+    - _SpecularColor: {r: 0.06531226, g: 0.1509434, b: 0.053257383, a: 1}
   m_BuildTextureStacks: []

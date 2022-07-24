@@ -39,7 +39,9 @@ half _SpecularEdgeSmoothness;
 half _SpecularStrengthMultiplier;
 half4 _SpecularColor;
 half4 _ShadowColor;
-//
+//Rim Light
+half _RimLightThickness;
+half4 _RimLightColor;
 float4 _HalfToneTexture_ST;
 CBUFFER_END
 

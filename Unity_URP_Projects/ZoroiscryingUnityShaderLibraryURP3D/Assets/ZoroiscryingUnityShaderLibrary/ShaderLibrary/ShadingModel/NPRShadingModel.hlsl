@@ -31,8 +31,8 @@ inline void InitializeShadingData(
     nprShadingData.SpecularColor = specularColor;
     nprShadingData.ShadowColor = shadowColor;
     
-    nprShadingData.RimLightColor = rimLightSize;
-    nprShadingData.RimLightSize = rimLightColor;
+    nprShadingData.RimLightColor = rimLightColor;
+    nprShadingData.RimLightSize = rimLightSize;
     nprShadingData.HalfToneValue = halfToneValue;
 }
 
@@ -49,6 +49,8 @@ half3 LightingPhysicallyBased_NPR(BRDFData brdfData, BRDFData brdfDataClearCoat,
 {
     half NdotL = saturate(dot(normalWS, lightDirectionWS));
     half nprNdotL = 1.0;
+    
+    // Diffuse Calculation
 #if _DIFFUSESHADEMODE_SHARP
     nprNdotL =
         smoothstep(nprShadingData.DiffuseLightCutOff - 0.01, nprShadingData.DiffuseLightCutOff + 0.01, NdotL);
@@ -65,13 +67,15 @@ half3 LightingPhysicallyBased_NPR(BRDFData brdfData, BRDFData brdfDataClearCoat,
     half lightAttenuation = lightDistAttenuation * lightShadowAttenuation;
     half3 radiance = lightColor * (lightAttenuation * nprNdotL);
     half3 brdf = brdfData.diffuse * lightColor * lightDistAttenuation * lerp(nprShadingData.ShadowColor, 1.0, nprNdotL * lightShadowAttenuation);
-    
+
+    // Specular Calculation
 #ifndef _SPECULARHIGHLIGHTS_OFF
     [branch] if (!specularHighlightsOff)
     {
         // modified to fit the 0-1 range as much as possible
         half specularStrength = DirectBRDFSpecular(brdfData, normalWS, lightDirectionWS, viewDirectionWS);
         half nprSpecularStrength = 1.0;
+        
         #if _SPECULARSHADEMODE_SHARP
         nprSpecularStrength =
             smoothstep(nprShadingData.SpecularLightCutOff - 0.01, nprShadingData.SpecularLightCutOff + 0.01, specularStrength);
@@ -111,6 +115,13 @@ half3 LightingPhysicallyBased_NPR(BRDFData brdfData, BRDFData brdfDataClearCoat,
 #endif // _CLEARCOAT
     }
 #endif // _SPECULARHIGHLIGHTS_OFF
+
+    // Rim Light Calculation (Fresnel)
+    half fresnel = pow(saturate(1.0h - dot(normalWS, viewDirectionWS)), 1.0f);
+    half rimLightThresholdBegin = 1.0f - nprShadingData.RimLightSize / 64.0f;
+    half rimLightStrength = smoothstep(rimLightThresholdBegin, rimLightThresholdBegin + 0.05h, fresnel);
+    half dirToLight = saturate(dot(normalWS, lightDirectionWS));
+    brdf += rimLightStrength * nprShadingData.RimLightColor * dirToLight;
 
     return brdf;
 }
