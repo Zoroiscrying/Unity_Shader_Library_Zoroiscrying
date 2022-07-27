@@ -108,13 +108,13 @@ Global Wind 3D Scene Debug
 
 - Based on `DrawMeshInstancedIndirect`
 
-![GlobalWind3DWindDebug1](Resources/Global Wind 3D/GlobalWind3DWindDebug1.jpg)
+<img src="Resources/Global Wind 3D/GlobalWind3DWindDebug1.jpg" alt="GlobalWind3DWindDebug1" style="zoom:80%;" />
 
 Global Wind 2D Texture Slice Debug
 
 - Based on Unity Post Processing and Custom PPS Render Pass
 
-![GlobalWind3DWindDebug2](Resources/Global Wind 3D/GlobalWind3DWindDebug2.jpg)
+<img src="Resources/Global Wind 3D/GlobalWind3DWindDebug2.jpg" alt="GlobalWind3DWindDebug2" style="zoom:80%;" />
 
 Wind Contributor Objects
 
