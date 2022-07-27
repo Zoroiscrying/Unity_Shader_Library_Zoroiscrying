@@ -108,7 +108,7 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RimLightThickness: 10.8
+    - _RimLightThickness: 16.3
     - _SCREEN_SPACE_HALFTONE: 0
     - _SmoothStepEdge: 0
     - _Smoothness: 0

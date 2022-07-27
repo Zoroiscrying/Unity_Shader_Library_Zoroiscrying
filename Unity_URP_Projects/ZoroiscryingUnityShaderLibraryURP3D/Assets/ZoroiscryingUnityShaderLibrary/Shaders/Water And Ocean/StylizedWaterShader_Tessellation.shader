@@ -58,7 +58,7 @@
 		_ScatteringIntensityControl("Scattering Control: Height, Normal, Sun, Bubble", Vector) = (1.0, 1.0, 1.0, 1.0)
 		_ScatteringDistance("Scattering Distance", Float) = 20.0
 		_ScatteringFogDistance("Scattering Fog Distance", Float) = 40.0
-		_ScatteringRamp("Scattering Ramp", 2D) = "white"{}
+		_ScatteringRamp("Scattering Ramp", 2D) = "black"{}
 		
 		[Header(Lighting Control)]
 		_NormalAlphaStrength("Normal Alpha Strength", float) = 0.5

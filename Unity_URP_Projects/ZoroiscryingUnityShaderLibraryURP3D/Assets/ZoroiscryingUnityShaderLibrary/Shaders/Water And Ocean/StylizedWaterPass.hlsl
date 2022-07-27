@@ -291,6 +291,7 @@ float4 StylizedWaterPassFragment(Varyings input) : SV_Target
     float surfaceDistanceToCam = length(input.positionVS);
     float sceneDistanceToCam = LinearEyeDepth(SampleSceneDepth(input.positionSS), _ZBufferParams) * length(input.positionVS/input.positionVS.z);
     float surfaceDistanceToSceneOrig = sceneDistanceToCam - surfaceDistanceToCam;
+    normalWS = lerp(normalWS, float3(0, 1, 0), saturate(surfaceDistanceToCam / 500.0f));
     
     // --- Foam Calculation
     half3 foamControl = SAMPLE_TEXTURE2D(_FoamTexture, sampler_FoamTexture,
