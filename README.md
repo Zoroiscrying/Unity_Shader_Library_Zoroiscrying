@@ -114,7 +114,7 @@ Global Wind 2D Texture Slice Debug
 
 - Based on Unity Post Processing and Custom PPS Render Pass
 
-![GlobalWind3DWindDebug1](Resources/Global Wind 3D/GlobalWind3DWindDebug2.jpg)
+![GlobalWind3DWindDebug2](Resources/Global Wind 3D/GlobalWind3DWindDebug2.jpg)
 
 Wind Contributor Objects
 
