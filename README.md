@@ -106,27 +106,58 @@ The following showcase pictures and knowledge network are organized in my unders
 
 Global Wind 3D Scene Debug
 
+- Based on `DrawMeshInstancedIndirect`
 
+![GlobalWind3DWindDebug1](Resources/Global Wind 3D/GlobalWind3DWindDebug1.jpg)
 
 Global Wind 2D Texture Slice Debug
 
+- Based on Unity Post Processing and Custom PPS Render Pass
 
+![GlobalWind3DWindDebug1](Resources/Global Wind 3D/GlobalWind3DWindDebug2.jpg)
 
 Wind Contributor Objects
 
+- Shapes - Box, Cylinder, Sphere
+- Velocity Calculation Type - Fixed, Point-based, Axis-Distance-Based
 
+<img src="Resources/Global Wind 3D/GlobalWind3DWindDebug3.jpg" alt="GlobalWind3DWindDebug1" style="zoom:60%;" /><img src="Resources/Global Wind 3D/GlobalWind3DWindDebug4.jpg" alt="GlobalWind3DWindDebug1" style="zoom:50%;" /><img src="Resources/Global Wind 3D/GlobalWind3DWindDebug5.jpg" alt="GlobalWind3DWindDebug1" style="zoom:50%;" />
 
 Wind Receivers (On Progress)
+
+- Planning
+  - Vegetation - Grass, Vines, Shrubs
+  - Plant - Tree
+  - Cloth - Non-physically-correct
+  - Fur / Hair
 
 
 
 ### 2 Volumetric Lighting & Atmospheric Scattering
+
+**References**
+
+- 
+
+**Showcase Pictures**
+
+World-Space Ray-Marching Volumetric Lighting
+
+
+
+Post-Processing Radial-Blur Volumetric Lighting
+
+
 
 ### 3 Deformable Snow Ground
 
 ### 4 Dynamic Weather System
 
 ### 5 Screen Space Particles
+
+**References**
+
+- 
 
 ### 6 Terrain Rendering System
 
