@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ZoroiscryingUnityShaderLibrary.Editor
 {
-    public class CustomBasicDissolveShaderGui : BaseShaderGUI
+    public class CustomBasicDissolveShaderGui : CustomLitShaderGui
     {
         protected enum DissolveMode
         {
@@ -26,6 +26,8 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
             public MaterialProperty dissolveColor;
             public MaterialProperty uvDissolveEdge;
             public MaterialProperty dissolveMode;
+            public MaterialProperty positionAxisPrime;
+            public MaterialProperty dissolveMultiplier;
 
             public BasicDissolveProperties(MaterialProperty[] properties)
             {
@@ -37,6 +39,8 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
                 dissolveColor = BaseShaderGUI.FindProperty("_DissolveColor", properties);
                 uvDissolveEdge = BaseShaderGUI.FindProperty("_UVDissolveEdge", properties);
                 dissolveMode = BaseShaderGUI.FindProperty("_Dissolve", properties);
+                positionAxisPrime = BaseShaderGUI.FindProperty("_Dissolve_Axis", properties);
+                dissolveMultiplier = FindProperty("_DissolveMultiplier", properties);
             }
         }
 
@@ -87,7 +91,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
         public override void DrawSurfaceInputs(Material material)
         {
             base.DrawSurfaceInputs(material);
-            DrawEmissionProperties(material, true);
+            //DrawEmissionProperties(material, true);
             materialEditor.ShaderProperty(basicDissolveProperties.dissolveColor,
                 EditorGUIUtility.TrTextContent("Dissolve Color"));
             materialEditor.ShaderProperty(basicDissolveProperties.dissolveSpan,
@@ -96,6 +100,10 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
                 EditorGUIUtility.TrTextContent("Noise sampling scale"));
             materialEditor.ShaderProperty(basicDissolveProperties.noiseValueScaleFactor,
                 EditorGUIUtility.TrTextContent("Noise value scale"));
+            materialEditor.ShaderProperty(basicDissolveProperties.positionAxisPrime,
+                    EditorGUIUtility.TrTextContent("Position Dissolve Axis Prime"));
+            materialEditor.ShaderProperty(basicDissolveProperties.dissolveMultiplier,
+                EditorGUIUtility.TrTextContent("Dissolve Value Multiplier"));
             materialEditor.ShaderProperty(basicDissolveProperties.positionDissolveEdge,
                 EditorGUIUtility.TrTextContent("Position dissolve edge"));
             materialEditor.ShaderProperty(basicDissolveProperties.distanceDissolveEdge,

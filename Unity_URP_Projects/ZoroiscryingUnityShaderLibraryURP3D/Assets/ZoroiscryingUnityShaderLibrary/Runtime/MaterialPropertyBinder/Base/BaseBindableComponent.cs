@@ -9,6 +9,7 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.MaterialBinder
     /// </summary>
     /// <typeparam name="TC">The type of the value component.</typeparam>
     /// <typeparam name="TR">The type of the root for retrieving the component.</typeparam>
+    [RequireComponent(typeof(BaseMaterialBinder))]
     public class BaseBindableComponent<TC, TR> : AbstractBindableComponent<TC, TR>
     {
         protected override TC RetrieveComponentValue(TR rootObject)

@@ -8,7 +8,8 @@ public class ObjectMoverAndRandomOrganizer : MonoBehaviour
 {
     public bool TranslatingLocal = true;
     public Vector3 TranslatingVelocity = Vector3.forward;
-    
+    public Vector3 RandomVelocity = Vector3.zero;
+
     public bool RotatingLocal = false;
     public Vector3 RotatingAxis = Vector3.forward;
     public float RotatingAngleDegreeSpeed = 360;
@@ -28,6 +29,7 @@ public class ObjectMoverAndRandomOrganizer : MonoBehaviour
     {
         _OrigPositionLocal = this.transform.localPosition;
         _repositionTime = RepositionTime + Random.Range(-1f, 1f) * RepositionTimeRandomOffset;
+        TranslatingVelocity += Random.Range(-1, 1) * RandomVelocity;
     }
 
     // Update is called once per frame

@@ -78,6 +78,8 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
         
         // Dissolve properties
         [KeywordEnum(POSITION_BASED, DISTANCE_BASED, UV_BASED)] _Dissolve("Dissolve Mode", Float) = 0.0
+        [KeywordEnum(X_PRIME, Y_PRIME, Z_PRIME)] _Dissolve_Axis("Position Axis Prime", Int) = 0
+        _DissolveMultiplier("Dissolve Value Multiplier", float) = 1.0
         _DissolveSpan("Dissolve Edge Span", Float) = 0.1
         [HDR]_DissolveColor("Dissolve Color", Color) = (4, 0, 0, 0)
         
@@ -184,6 +186,7 @@ Shader "Custom/Object/Lit_Basic_Dissolve"
             //---------------------------------------
             // Dissolve Shader Keywords
             #pragma multi_compile _ _DISSOLVE_POSITION_BASED _DISSOLVE_DISTANCE_BASED _DISSOLVE_UV_BASED
+            #pragma multi_compile _ _DISSOLVE_AXIS_X_PRIME _DISSOLVE_AXIS_Y_PRIME _DISSOLVE_AXIS_Z_PRIME
 
             #include "../../../ShaderLibrary/Template/CustomLitInput.hlsl"
             #include "BasicDissolvePass.hlsl"

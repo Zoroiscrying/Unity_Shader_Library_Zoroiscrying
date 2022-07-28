@@ -186,44 +186,44 @@ public class TextureChannelCompositeEditor : EditorWindow
     {
         if (readChannels[0] && !usedChannels[0])
         {
-            return color.r;
             usedChannels[0] = true;
+            return color.r;
         }
         if (readChannels[1] && !usedChannels[1])
         {
-            return color.g;
             usedChannels[1] = true;
+            return color.g;
         }
         if (readChannels[2] && !usedChannels[2])
         {
-            return color.b;
             usedChannels[2] = true;
+            return color.b;
         }
         if (readChannels[3] && !usedChannels[3])
         {
-            return color.a;
             usedChannels[3] = true;
+            return color.a;
         }
         
         if (readChannels[4] && !usedChannels[4])
         {
-            return 1.0f - color.r;
             usedChannels[4] = true;
+            return 1.0f - color.r;
         }
         if (readChannels[5] && !usedChannels[5])
         {
-            return  1.0f - color.g;
             usedChannels[5] = true;
+            return  1.0f - color.g;
         }
         if (readChannels[6] && !usedChannels[6])
         {
-            return  1.0f - color.b;
             usedChannels[6] = true;
+            return  1.0f - color.b;
         }
         if (readChannels[7] && !usedChannels[7])
         {
-            return  1.0f - color.a;
             usedChannels[7] = true;
+            return  1.0f - color.a;
         }
         return color.r;
     }

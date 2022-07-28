@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.Rendering;
 using UnityEditor.Rendering.Universal.ShaderGUI;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace ZoroiscryingUnityShaderLibrary.Editor
 {
@@ -35,7 +36,7 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
         // material changed check
         public override void ValidateMaterial(Material material)
         {
-            //SetMaterialKeywords(material, LitGUI.SetMaterialKeywords, LitDetailGUI.SetMaterialKeywords);
+            SetMaterialKeywords(material, LitGUI.SetMaterialKeywords, CustomLitShaderGui.SetMaterialKeywords);
         }
 
         // material main surface options
@@ -130,6 +131,17 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
                 Texture texture = material.GetTexture("_MetallicGlossMap");
                 if (texture != null)
                     material.SetTexture("_MetallicSpecGlossMap", texture);
+            }
+        }
+        
+        public static void SetMaterialKeywords(Material material)
+        {
+            if (material.HasProperty("_DetailAlbedoMap") && material.HasProperty("_DetailNormalMap") && material.HasProperty("_DetailAlbedoMapScale"))
+            {
+                bool isScaled = material.GetFloat("_DetailAlbedoMapScale") != 1.0f;
+                bool hasDetailMap = material.GetTexture("_DetailAlbedoMap") || material.GetTexture("_DetailNormalMap");
+                CoreUtils.SetKeyword(material, "_DETAIL_MULX2", !isScaled && hasDetailMap);
+                CoreUtils.SetKeyword(material, "_DETAIL_SCALED", isScaled && hasDetailMap);
             }
         }
     }

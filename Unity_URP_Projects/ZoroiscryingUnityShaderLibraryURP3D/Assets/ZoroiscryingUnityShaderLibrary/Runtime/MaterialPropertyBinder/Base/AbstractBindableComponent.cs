@@ -4,8 +4,17 @@ using UnityEngine;
 
 namespace ZoroiscryingUnityShaderLibrary.Runtime.MaterialBinder
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TC">The type of the value component.</typeparam>
+    /// <typeparam name="TR">The type of the root for retrieving the component.</typeparam>
     public abstract class AbstractBindableComponent<TC, TR> : MonoBehaviour, IBindableComponent<TC>, IMaterialPropertyBlockApplicable
     {
+        [SerializeField] private bool preProcessComponentValue;
+        // https://answers.unity.com/questions/179255/a-way-to-iterateenumerate-shader-properties.html
+        // TODO:: This is a code example getting the possible shader properties, can be used to generate a enum panel
+        // for user to select properties to bind to.
         public string MaterialPropName => propertyName;
 
         public void SetMaterialPropertyName(string name)
@@ -15,7 +24,13 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.MaterialBinder
         
         [SerializeField] protected string propertyName;
 
-        public TC ComponentValue { get => RetrieveComponentValue(boundRoot); }
+        public TC ComponentValue
+        {
+            get
+            {
+                return PreProcessComponentValue(RetrieveComponentValue(boundRoot), this.gameObject);
+            }
+        }
 
         [SerializeField]
         protected TR boundRoot = default;
@@ -24,6 +39,11 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.MaterialBinder
         public void BindRoot(TR rootObject)
         {
             boundRoot = rootObject;
+        }
+
+        public virtual TC PreProcessComponentValue(TC component, GameObject boundObject)
+        {
+            return component;
         }
         
         public virtual void ApplyMatPropBlockChange(string propName, MaterialPropertyBlock matPropBlock)

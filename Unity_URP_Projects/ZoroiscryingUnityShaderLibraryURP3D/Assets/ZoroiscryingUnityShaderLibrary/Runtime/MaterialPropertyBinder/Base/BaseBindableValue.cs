@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace ZoroiscryingUnityShaderLibrary.Runtime.MaterialBinder
 {
+    [RequireComponent(typeof(BaseMaterialBinder))]
     public class BaseBindableValue<T> : MonoBehaviour, IMaterialPropertyBlockApplicable
     {
         public string MaterialPropName => propertyName;

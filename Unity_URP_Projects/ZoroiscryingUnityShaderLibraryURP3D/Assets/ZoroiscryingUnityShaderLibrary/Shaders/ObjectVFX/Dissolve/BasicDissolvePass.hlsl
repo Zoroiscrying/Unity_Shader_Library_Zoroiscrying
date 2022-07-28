@@ -15,14 +15,15 @@
 #endif
 
 // Inputs of Dissolve shader
-half _DissolveSpan;
+float _DissolveSpan;
 half4 _NoiseScale;
-half _NoiseValueScaleFactor;
-half _PositionDissolveEdge;
-half _DistanceDissolveEdge;
+float _NoiseValueScaleFactor;
+float _PositionDissolveEdge;
+float _DistanceDissolveEdge;
 half4 _DissolveColor;
 half4 _DistanceDissolveReferencePoint;
-half _UVDissolveEdge;
+float _UVDissolveEdge;
+float _DissolveMultiplier;
 
 // keep this file in sync with LitGBufferPass.hlsl
 
@@ -217,7 +218,7 @@ float DissolveFactor_Position_Y_Noise(float positionCoord, float2 noiseCoord)
     float noiseDense = value_noise12(noiseCoord * _NoiseScale + _Time) * 2 - 1;
     float noiseLoose = value_noise12(noiseCoord * 4 + _Time) * 2 - 1;
 
-    return positionCoord - (_PositionDissolveEdge + sin(_Time.y * 0.5) * 0.3) +
+    return positionCoord - (_PositionDissolveEdge + sin(_Time.y * 0.5) * 0.001) +
            lerp(noiseDense, noiseLoose, 0.8) * _NoiseValueScaleFactor;
 }
 
@@ -247,18 +248,26 @@ half4 LitPassFragment(Varyings input) : SV_Target
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     
     #if _DISSOLVE_POSITION_BASED
-    dissolveFactor = DissolveFactor_Position_Y_Noise(input.positionOS.z, input.positionOS.xy);
+    #if _DISSOLVE_AXIS_X_PRIME
+    dissolveFactor = -DissolveFactor_Position_Y_Noise(input.positionOS.x, input.positionOS.yz) * _DissolveMultiplier;
     emissionFactor = clamp(1 - sign(dissolveFactor - _DissolveSpan), 0, 1);
+    #elif _DISSOLVE_AXIS_Y_PRIME
+    dissolveFactor = -DissolveFactor_Position_Y_Noise(input.positionOS.y, input.positionOS.xz) * _DissolveMultiplier;
+    emissionFactor = clamp(1 - sign(dissolveFactor - _DissolveSpan), 0, 1);
+    #elif _DISSOLVE_AXIS_Z_PRIME
+    dissolveFactor = -DissolveFactor_Position_Y_Noise(input.positionOS.z, input.positionOS.xy) * _DissolveMultiplier;
+    emissionFactor = clamp(1 - sign(dissolveFactor - _DissolveSpan), 0, 1);
+    #endif
     #endif
     
     #if _DISSOLVE_DISTANCE_BASED
-    dissolveFactor = DissolveFactor_Distance_Noise(input.positionWS, _DistanceDissolveReferencePoint, input.positionWS.xy);
+    dissolveFactor = DissolveFactor_Distance_Noise(input.positionWS, _DistanceDissolveReferencePoint, input.positionWS.xy) * _DissolveMultiplier;
     //float dissolveFactor = distance(input.positionWS, _WorldSpaceCameraPos) - _DistanceDissolveEdge;
     emissionFactor = clamp(1 - sign(dissolveFactor - _DissolveSpan), 0, 1);
     #endif
     
     #if _DISSOLVE_UV_BASED
-    dissolveFactor = DissolveFactor_UV_Noise(input.uv, input.positionOS.xy);
+    dissolveFactor = DissolveFactor_UV_Noise(input.uv, input.positionOS.xy) * _DissolveMultiplier;
     emissionFactor = clamp(1 - sign(dissolveFactor - _DissolveSpan), 0, 1);
     #endif
 
