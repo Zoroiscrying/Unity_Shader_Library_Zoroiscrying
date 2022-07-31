@@ -15,19 +15,25 @@ MonoBehaviour:
   active: 0
   exposure:
     m_OverrideState: 1
-    m_Value: 0.74
+    m_Value: 2.36
   density:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0.25
   decay:
     m_OverrideState: 1
-    m_Value: 0.75
+    m_Value: 0.82
   weight:
     m_OverrideState: 1
     m_Value: 0.25
   lightColor:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 0.9418632, b: 0.61698115, a: 1}
+    m_Value: {r: 0.73018867, g: 0.8295928, b: 1, a: 1}
+  debugOcclusionPass:
+    m_OverrideState: 1
+    m_Value: 0
+  debugLightCompositePass:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &-4179492388291730111
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -43,10 +49,10 @@ MonoBehaviour:
   active: 0
   edgeOpacity:
     m_OverrideState: 1
-    m_Value: 0.54
+    m_Value: 1
   edgeColor:
     m_OverrideState: 1
-    m_Value: {r: 0, g: 2, b: 0.1917963, a: 1}
+    m_Value: {r: 0.67046934, g: 1, b: 0.4188679, a: 1}
 --- !u!114 &-2539486317984260720
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -65,31 +71,31 @@ MonoBehaviour:
     m_Value: 1
   speedLineTilling:
     m_OverrideState: 1
-    m_Value: 200
+    m_Value: 400
   speedLineRadialScale:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 0.16
   speedLinePower:
     m_OverrideState: 1
-    m_Value: 1.5
+    m_Value: 1.48
   speedLineRange:
     m_OverrideState: 1
-    m_Value: {x: 0.26412478, y: 0.6164447}
+    m_Value: {x: 0.26412478, y: 0.4299968}
   speedLineSmoothness:
     m_OverrideState: 1
-    m_Value: 0.024
+    m_Value: 0.129
   speedLineAnimation:
     m_OverrideState: 1
-    m_Value: 0.05
+    m_Value: 2
   maskScale:
     m_OverrideState: 1
-    m_Value: 0.533
+    m_Value: 0.554
   maskHardness:
     m_OverrideState: 1
-    m_Value: 0.6
+    m_Value: 0.25
   maskPower:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 1.44
   animateLineColor:
     m_OverrideState: 1
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -108,19 +114,19 @@ MonoBehaviour:
   active: 0
   outlineThickness:
     m_OverrideState: 1
-    m_Value: 4
+    m_Value: 4.5
   depthSensitivity:
     m_OverrideState: 1
     m_Value: 1
   normalsSensitivity:
     m_OverrideState: 1
-    m_Value: 0.75
+    m_Value: 1
   colorSensitivity:
     m_OverrideState: 1
-    m_Value: 0.05
+    m_Value: 1
   outlineColor:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 0.18040943, b: 0, a: 1}
+    m_Value: {r: 0, g: 1, b: 0.20408297, a: 1}
 --- !u!114 &-2186809309741995836
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -133,13 +139,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e029ddcb7c84c21a01894c25589e2db, type: 3}
   m_Name: UtilityPostProcess
   m_EditorClassIdentifier: 
-  active: 0
+  active: 1
   saturation:
     m_OverrideState: 1
     m_Value: 1
   hueShift:
     m_OverrideState: 1
-    m_Value: 0.618
+    m_Value: 0
   invert:
     m_OverrideState: 1
     m_Value: 0
@@ -177,7 +183,7 @@ MonoBehaviour:
   active: 0
   intensity:
     m_OverrideState: 1
-    m_Value: 0.141
+    m_Value: -0.17
   xMultiplier:
     m_OverrideState: 0
     m_Value: 1

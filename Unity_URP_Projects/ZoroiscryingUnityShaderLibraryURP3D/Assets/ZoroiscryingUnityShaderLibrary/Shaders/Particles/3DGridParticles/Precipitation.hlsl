@@ -59,7 +59,8 @@ MeshData vert(MeshData meshData)
 struct g2f
 {
     float4 pos : SV_POSITION;
-    float4 uv : TEXCOORD0; // uv.xy, opacity, color variation amount
+    float3 Sh  : TEXCOORD1;
+    float4 uv  : TEXCOORD0; // uv.xy, opacity, color variation amount
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
@@ -73,7 +74,7 @@ void AddVertex (inout TriangleStream<g2f> stream, float3 vertex, float2 uv, floa
     ZERO_INITIALIZE(g2f, OUT);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     OUT.pos = TransformObjectToHClip(vertex);
-
+    OUT.Sh = SampleSH(float3(0, 1, 0));
     // transfer the uv coordinates
     OUT.uv.xy = uv;    
 
@@ -209,14 +210,14 @@ void geom(point MeshData IN[1], inout TriangleStream<g2f> stream) {
 
 float4 frag(g2f IN) : SV_Target {
     float4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv.xy) * _Color;
-
+    
     // add hue variation (taken from speed tree)
     float colorVariationAmount = IN.uv.w;
     float3 shiftedColor = lerp(color.rgb, _ColorVariation.rgb, colorVariationAmount);
     float maxBase = max(color.r, max(color.g, color.b));
     float newMaxBase = max(shiftedColor.r, max(shiftedColor.g, shiftedColor.b));
     // preserve vibrance
-    color.rgb = saturate(shiftedColor * ((maxBase/newMaxBase) * 0.5 + 0.5));
+    color.rgb = saturate(shiftedColor * ((maxBase/newMaxBase))) * _MainLightColor + IN.Sh;
     
     color.a *= IN.uv.z; // uv.z == opacity
     return color;

@@ -222,8 +222,8 @@
         //col =  _volumetricTexture.Sample(sampler_volumetricTexture, uv);
         
         //color our rays and multiply by the intensity
-        _SunMoonColor = half4(1,1,1,1);
-        real3 finalShaft =(saturate(col)*_Intensity)* normalize (_SunMoonColor);
+        _SunMoonColor = _MainLightColor;
+        real3 finalShaft =(saturate(col) * _Intensity) * (_SunMoonColor);
         real3 screen = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv).rgb;
         
         //regular sum (linear dodge/additive)

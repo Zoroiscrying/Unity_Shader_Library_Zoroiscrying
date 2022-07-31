@@ -29,7 +29,7 @@
 
     TEXTURE2D(_BackgroundOccluded);
 
-    #define NUM_SAMPLES 32
+    #define NUM_SAMPLES 64
 
     float FragmentRaymarch(Varyings input) : SV_Target
     {
@@ -37,8 +37,13 @@
 
         float2 uv = input.uv;
         float2 lightPositionSS = _MainLightPositionSS.xy;
-        float2 randomOffset = random12(uv) * 0.01;
-        uv += randomOffset;
+
+        // Calculate vector from pixel to light source in screen space.
+        half2 deltaUV = lightPositionSS - uv;
+        half2 deltaUVDirection = normalize(deltaUV);
+        
+        float2 randomOffset = random12(deltaUVDirection) * 0.005f;
+        uv += randomOffset * normalize(lightPositionSS - uv);
 
 #if UNITY_UV_STARTS_AT_TOP
         if (_MainTex_TexelSize.y < 0)
@@ -48,24 +53,19 @@
 #endif
 
         //lightPositionSS.y = 1 - lightPositionSS.y;
-        // Calculate vector from pixel to light source in screen space.
-        half2 deltaUV = lightPositionSS - uv;
-        half2 deltaUVDirection = normalize(deltaUV);
-        half deltaUVLength = length(deltaUV) + 1;
-        deltaUV = clamp(deltaUV, half2(0,0), half2(1,1));
+        deltaUV = lightPositionSS - uv;
+        half deltaUVLength = length(deltaUV);
+        deltaUV = clamp(deltaUV, half2(-1, -1), half2(1,1));
         deltaUV *= 1.0f / NUM_SAMPLES * _Density / deltaUVLength;
 
         // Set up illumination decay factor.
-        half illuminationDecay = 1.0f;
-
+        half illuminationDecay = 0.99f;
         float lightShaft = 0;
 
         // Evaluate summation from Equation 3 NUM_SAMPLES iterations.
         UNITY_UNROLL
         for (int i = 0; i < NUM_SAMPLES; i++)
         {
-            // Step sample location along ray.
-            uv += deltaUV;
             // Retrieve sample at new location.
             float sample = SAMPLE_TEXTURE2D(_BackgroundOccluded, sampler_LinearClamp, uv).r;
             // Apply sample attenuation scale/decay factors.
@@ -74,6 +74,8 @@
             lightShaft += sample;
             // Update exponential decay factor.
             illuminationDecay *= _Decay;
+            // Step sample location along ray.
+            uv += deltaUV;
         }
         
         //return depth;
@@ -213,11 +215,12 @@
         
         //color our rays and multiply by the intensity
         real screenSpaceLightDot = saturate(1 - dot(UNITY_MATRIX_IT_MV[2].xyz, _MainLightDirectionWS));
-        real3 finalShaft =(saturate(col)*_Exposure * screenSpaceLightDot)* normalize (_LightColor);
+        real3 finalShaft =(saturate(col) * _Exposure * screenSpaceLightDot)* normalize (_LightColor);
         real3 screen = SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv).rgb;
         
         //regular sum (linear dodge/additive)
         //return finalShaft;
+        //return 0;
         return screen + finalShaft;
     }
     

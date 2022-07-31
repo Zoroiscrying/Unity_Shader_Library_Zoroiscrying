@@ -264,10 +264,11 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
             }
 
             cmd.BeginSample("PostProcessLightVolume");
-            var R18Descriptor =
+            
+            var R16Descriptor =
                 new RenderTextureDescriptor(m_Descriptor.width/2, m_Descriptor.height/2, RenderTextureFormat.R16);
-            cmd.GetTemporaryRT(m_TemporaryColorTexture01.id, R18Descriptor, FilterMode.Bilinear);
-            cmd.GetTemporaryRT(m_TemporaryColorTexture02.id, R18Descriptor, FilterMode.Bilinear);
+            cmd.GetTemporaryRT(m_TemporaryColorTexture01.id, R16Descriptor, FilterMode.Bilinear);
+            cmd.GetTemporaryRT(m_TemporaryColorTexture02.id, R16Descriptor, FilterMode.Bilinear);
             cmd.GetTemporaryRT(m_TemporaryColorTexture03.id, m_Descriptor, FilterMode.Bilinear);
 
             material.SetColor(ShaderConstants.LightColor, m_postProcessLightVolume.lightColor.value);
@@ -278,7 +279,7 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
             
             Vector3 sunDirectionWorldSpace = RenderSettings.sun.transform.forward;
             Vector3 cameraPositionWorldSpace = cameraData.camera.transform.position; 
-            Vector3 sunPositionWorldSpace = cameraPositionWorldSpace + sunDirectionWorldSpace;
+            Vector3 sunPositionWorldSpace = cameraPositionWorldSpace + sunDirectionWorldSpace * cameraData.camera.farClipPlane;
             Vector3 sunPositionViewportSpace = cameraData.camera.WorldToViewportPoint(sunPositionWorldSpace);
 
             material.SetVector("_MainLightPositionSS", sunPositionViewportSpace);
@@ -286,18 +287,33 @@ public class CustomPostProcessPassFeature : ScriptableRendererFeature
             // Background Occluded texture generation
             cmd.Blit(m_ColorAttachment, m_TemporaryColorTexture01.Identifier(), material, 1);
             cmd.SetGlobalTexture("_BackgroundOccluded", m_TemporaryColorTexture01.Identifier());
+            if (m_postProcessLightVolume.debugOcclusionPass.value)
+            {
+                Blit(cmd, m_TemporaryColorTexture01.Identifier(), m_ColorAttachment);
+                cmd.EndSample("PostProcessLightVolume");
+                return;
+            }
             // Occluded background Radial blur
             cmd.Blit(m_ColorAttachment, m_TemporaryColorTexture02.Identifier(), material, 0);
             // Bilateral blur with depth awareness
             cmd.Blit(m_TemporaryColorTexture02.Identifier(), m_TemporaryColorTexture01.Identifier(), blurMaterial, 0);
             cmd.Blit(m_TemporaryColorTexture01.Identifier(), m_TemporaryColorTexture02.Identifier(), blurMaterial, 1);
             cmd.SetGlobalTexture("_VolumetricLightTexture", m_TemporaryColorTexture02.Identifier());
+            if (m_postProcessLightVolume.debugLightCompositePass.value)
+            {
+                Blit(cmd, m_TemporaryColorTexture02.Identifier(), m_ColorAttachment);
+                cmd.EndSample("PostProcessLightVolume");
+                return;
+            }
             // Generate down sampled depth
             cmd.Blit(m_ColorAttachment, m_TemporaryColorTexture01.Identifier(), material, 2);
             cmd.SetGlobalTexture("_LowResDepth", m_TemporaryColorTexture01.Identifier());
+
+            Blit(cmd, m_ColorAttachment, m_TemporaryColorTexture03.Identifier(), material, 3);
+            Blit(cmd, m_TemporaryColorTexture03.Identifier(), m_ColorAttachment);
             
-            cmd.Blit(m_ColorAttachment, m_TemporaryColorTexture03.Identifier(), material, 3);
-            cmd.Blit(m_TemporaryColorTexture03.Identifier(), m_ColorAttachment);
+            //cmd.Blit(m_ColorAttachment, m_TemporaryColorTexture03.Identifier(), material, 3);
+            //cmd.Blit(m_TemporaryColorTexture03.Identifier(), m_ColorAttachment);
             //Blit(cmd, ref renderingData, material, 0);
 
             cmd.EndSample("PostProcessLightVolume");

@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39d40356c24708a499f1be9fd13bc0db, type: 3}
+  m_Name: Terrain Creation_Preset_2049_300
+  m_EditorClassIdentifier: 
+  TerrainWidth: 2000
+  TerrainLength: 2000
+  TerrainHeight: 300
+  StartPosition: {x: -1000, y: -300, z: -1000}
+  TilesX: 1
+  TilesZ: 1
+  GroupID: 0
+  AutoConnect: 1
+  DrawInstanced: 1
+  PixelError: 5
+  BaseMapDistance: 1000
+  BaseTextureResolution: 1024
+  ControlTextureResolution: 512
+  DetailResolution: 1024
+  DetailResolutionPerPatch: 32
+  MaterialOverride: {fileID: 0}
+  HeightmapResolution: 513
+  EnableHeightmapImport: 1
+  UseGlobalHeightmap: 0
+  HeightmapMode: 0
+  UseRawFile: 0
+  HeightmapWidth: 2048
+  HeightmapHeight: 2048
+  HeightmapRemapMax: 300
+  HeightmapRemapMin: 0
+  HeightmapDepth: 2
+  FlipMode: 0
+  BatchHeightmapFolder: 
+  GlobalHeightmapPath: 
+  TileHeightmapPaths: []
+  EnableGizmo: 1
+  EditGizmoBounds: 0
+  TerrainAssetDirectory: Assets/ZoroiscryingUnityShaderLibrary/Tests/16 Houdnini
+    Integration/Houdini Heightfield Terrain
+  EnableGuid: 1
+  EnableClearExistingData: 0
+  EnableLightingAutoBake: 0
+  PresetPath: 
+  ShowGroupSettings: 0
+  ShowHeightmapSettings: 1
+  ShowGizmoSettings: 1
+  ShowOptions: 1

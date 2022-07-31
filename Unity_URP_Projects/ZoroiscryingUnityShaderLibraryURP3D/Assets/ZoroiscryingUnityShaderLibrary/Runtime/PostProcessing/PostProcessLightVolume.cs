@@ -5,7 +5,6 @@ using UnityEngine.Rendering.Universal;
 
 namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
 {
-    // From https://github.com/keijiro/Kino/blob/master/Packages/jp.keijiro.kino.post-processing/Runtime/Utility.cs
     // Only for learning purpose in URP
     [Serializable, VolumeComponentMenu("Custom-Post-Processing/Post-Process-Light-Volume")]
     public class PostProcessLightVolume : VolumeComponent, IPostProcessComponent
@@ -15,6 +14,8 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
         public MinFloatParameter decay = new MinFloatParameter(0, 0.01f);
         public MinFloatParameter weight = new MinFloatParameter(0, 0.1f);
         public ColorParameter lightColor = new ColorParameter(new Color(1, 1, 1, 1), true, true, true);
+        public BoolParameter debugOcclusionPass = new BoolParameter(false);
+        public BoolParameter debugLightCompositePass = new BoolParameter(false);
         
         public bool IsActive() => exposure.value > 0;
 

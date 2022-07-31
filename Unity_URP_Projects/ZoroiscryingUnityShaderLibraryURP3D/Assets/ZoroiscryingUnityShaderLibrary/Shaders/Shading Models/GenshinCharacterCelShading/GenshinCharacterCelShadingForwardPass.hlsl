@@ -181,7 +181,7 @@ half4 LitPassFragment(Varyings input) : SV_Target
     InitializeCelShadingData(input.uv, celShadingData);
     
 #ifdef _DBUFFER
-    ApplyDecalToSurfaceData(input.positionCS, surfaceData, inputData);
+    //ApplyDecalToSurfaceData(input.positionCS, surfaceData, inputData);
 #endif
 
     // calculate screen space depth difference

@@ -112,7 +112,7 @@
             // weight calculation depending on distance and depth difference
             float depthDiff = abs(depthKernel - depthCenter);
             float r2 = depthDiff * BLUR_DEPTH_FALLOFF;
-            float g = exp(-r2*r2); // greater distance / depth difference -> less weight
+            float g = exp(-r2*r2); // greater distance / depth difference -> less weight == edge preserving effect
             real weight = g * gauss_filter_weights[abs(i)];
             //sum for every iteration of the color and weight of this sample 
             accumResult += weight * kernelSample;
