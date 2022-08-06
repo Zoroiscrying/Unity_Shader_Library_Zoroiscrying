@@ -511,8 +511,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 389925462}
-  m_LocalRotation: {x: 0.00507181, y: -0.99625856, z: 0.08488961, w: -0.015392005}
-  m_LocalPosition: {x: 2.03, y: 1.66, z: 1.19}
+  m_LocalRotation: {x: -0.08814955, y: -0.9121974, z: 0.28955483, w: -0.27619493}
+  m_LocalPosition: {x: 0.20205683, y: 5.074171, z: 9.903564}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -877,7 +877,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &489597091
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1099,7 +1099,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &601972026
 MonoBehaviour:
   m_ObjectHideFlags: 0

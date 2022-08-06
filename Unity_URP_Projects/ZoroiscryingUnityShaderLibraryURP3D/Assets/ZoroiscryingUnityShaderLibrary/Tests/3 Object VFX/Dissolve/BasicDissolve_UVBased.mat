@@ -2,15 +2,22 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: BasicDissolve_UVBased
   m_Shader: {fileID: 4800000, guid: 252bb92f7ae445909bcb5668b4e7b3da, type: 3}
-  m_ShaderKeywords: _DISSOLVE_UV_BASED _METALLICSPECGLOSSMAP _NORMALMAP _OCCLUSIONMAP
-    _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A _SPECULAR_SETUP
+  m_ValidKeywords:
+  - _DISSOLVE_AXIS_X_PRIME
+  - _DISSOLVE_UV_BASED
+  - _METALLICSPECGLOSSMAP
+  - _NORMALMAP
+  - _OCCLUSIONMAP
+  - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+  - _SPECULAR_SETUP
+  m_InvalidKeywords: []
   m_LightmapFlags: 6
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 1
@@ -90,7 +97,9 @@ Material:
     - _DetailNormalMapScale: 1
     - _Dissolve: 2
     - _DissolveMode: 2
+    - _DissolveMultiplier: 1
     - _DissolveSpan: 0.01
+    - _Dissolve_Axis: 0
     - _DistanceDissolveEdge: 1
     - _DstBlend: 0
     - _EnvironmentReflections: 1
