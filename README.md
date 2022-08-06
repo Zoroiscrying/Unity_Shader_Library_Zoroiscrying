@@ -26,6 +26,7 @@ See https://www.youtube.com/watch?v=aasnYKazO2Q for my TA/Rendering showreel and
 - Crystal Color Ramp
 - Opaque Texture Reflection - RGB Split effect
 ![Crystal_Shader](Resources/Showcases/OBJ_VFX/Crystal_Shader.jpg)
+![Crystal_Shader_2](Resources/Showcases/OBJ_VFX/Crystal_Shader_2.jpg)
 
 #### 2 Custom Light Flare Shape
 - Reference - Genshin Impact 渊下宫 / Zone Zero / Kejiro's PPS Light Streak
@@ -113,8 +114,9 @@ Ref:
 #### 4 Post Process Acceleration Effect
 
 - Animated Speed Lines
+- Good reference - Apex: Legends;
 
-
+![Animated_Speedline](Resources/Showcases/Screen_Space_Shaders/Animated_Speedline.jpg)
 
 #### 5 VHS-Image Effect & Glitch
 
@@ -124,10 +126,12 @@ Ref:
 
 - SSAO
 - World Position Rebuild
+- Not implemented yet.
 
 #### 2 Stencil Buffer Related
 
 - Portal
+- Mooncage
 
 #### 3 TAA & FXAA
 
@@ -136,7 +140,7 @@ Ref:
 #### 1 Cel Shading
 
 - Genshin Impact Style Cel Shading, Lightmap guided, Color ramp controlled (lacks face ramp control and hair specular map usage, didn't use screen space rim light).
-  - Outline pass
+  - Outline pass - Screen Space thickness, View space normal extrusion
 
 ![Genshin_Cel_1](Resources/Showcases/Shading_Model/Genshin_Impact_Cel_Shading_1.jpg)
 ![Genshin_Cel_2](Resources/Showcases/Shading_Model/Genshin_Impact_Cel_Shading_2.jpg)
