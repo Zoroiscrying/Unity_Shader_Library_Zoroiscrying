@@ -322,7 +322,9 @@ Post-Processing Radial-Blur Volumetric Lighting
   - Edge foam
   - Water reflection and refraction
 
-
+![Stylized_Ocean_1](Resources/Ocean%20and%20Water/Stylized_Ocean_1.jpg)
+![Stylized_Ocean_2](Resources/Ocean%20and%20Water/Stylized_Ocean_2.jpg)
+![Stylized_Ocean_3](Resources/Ocean%20and%20Water/Stylized_Ocean_3.jpg)
 
 - Todo: FFT-based Realistic Ocean Shaders (Praise Horizon: Forbidden West and Assassin's Creed: Odyssey)
 - Todo: Various Ocean simulations (Heightfield water simulation especially)
