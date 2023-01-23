@@ -4,9 +4,14 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
+  - debugInstanceMesh: {fileID: -8926791103327023576, guid: 53649fba7f1667745a2e3dd581804476, type: 3}
+  - instanceMaterial: {fileID: 2100000, guid: e69e695c60e814745a5785f9245beedd, type: 2}
   - csWindInheritance: {fileID: 7200000, guid: f341bef9662a39c4e8c25d92334d8b3f, type: 3}
   - csInjectWindDirectionAndIntensity: {fileID: 7200000, guid: 3ede1ac5cd584034dbcd7baa06043f64, type: 3}
-  - csWindPropagation: {fileID: 7200000, guid: 9e755a92f016ef145b778d70acbe2768, type: 3}
+  - csWindDiffusion: {fileID: 7200000, guid: 2eb31f91c7b64c0092a37e7e9f2dee40, type: 3}
+  - csWindAdvection: {fileID: 7200000, guid: 9e755a92f016ef145b778d70acbe2768, type: 3}
+  - csIntToHalfExport: {fileID: 7200000, guid: 98d569125d13402593fa303fc1b60b84, type: 3}
+  - windCenterTransform: {instanceID: 0}
   - textureNoise2D: {fileID: 2800000, guid: 86bebe6ef974d77418f51afe2ff3e498, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}

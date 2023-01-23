@@ -34,7 +34,10 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
         {
             if (shader == null)
             {
-                Debug.LogErrorFormat($"Missing shader. {GetType().DeclaringType.Name} render pass will not execute. Check for missing reference in the renderer resources.");
+                var declaringType = GetType().DeclaringType;
+                if (declaringType != null)
+                    Debug.LogErrorFormat(
+                        $"Missing shader. {declaringType.Name} render pass will not execute. Check for missing reference in the renderer resources.");
                 return null;
             }
 

@@ -56,6 +56,10 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
         }
         public static void DoDetailArea(DetailLitProperties properties, MaterialEditor materialEditor)
         {
+            if (properties.detailMask == null)
+            {
+                return;
+            }
             materialEditor.TexturePropertySingleLine(DetailLitStyles.detailMaskText, properties.detailMask);
             materialEditor.TexturePropertySingleLine(DetailLitStyles.detailAlbedoMapText, properties.detailAlbedoMap,
                 properties.detailAlbedoMap.textureValue != null ? properties.detailAlbedoMapScale : null);
@@ -163,9 +167,9 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
                 // Surface Option Props
                 workflowMode = BaseShaderGUI.FindProperty("_WorkflowMode", properties, false);
                 // Surface Input Props
-                metallic = BaseShaderGUI.FindProperty("_Metallic", properties);
+                metallic = BaseShaderGUI.FindProperty("_Metallic", properties, true);
                 specColor = BaseShaderGUI.FindProperty("_SpecColor", properties, false);
-                metallicGlossMap = BaseShaderGUI.FindProperty("_MetallicGlossMap", properties);
+                metallicGlossMap = BaseShaderGUI.FindProperty("_MetallicGlossMap", properties, false);
                 specGlossMap = BaseShaderGUI.FindProperty("_SpecGlossMap", properties, false);
                 smoothness = BaseShaderGUI.FindProperty("_Smoothness", properties, false);
                 smoothnessMapChannel = BaseShaderGUI.FindProperty("_SmoothnessTextureChannel", properties, false);
@@ -254,6 +258,10 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
             if (properties.workflowMode == null ||
                 (WorkflowMode)properties.workflowMode.floatValue == WorkflowMode.Metallic)
             {
+                if (properties.metallicGlossMap == null)
+                {
+                    return;
+                }
                 hasGlossMap = properties.metallicGlossMap.textureValue != null;
                 smoothnessChannelNames = LitStyles.metallicSmoothnessChannelNames;
                 materialEditor.TexturePropertySingleLine(LitStyles.metallicMapText, properties.metallicGlossMap,
@@ -261,6 +269,10 @@ namespace ZoroiscryingUnityShaderLibrary.Editor
             }
             else
             {
+                if (properties.specGlossMap == null)
+                {
+                    return;
+                }
                 hasGlossMap = properties.specGlossMap.textureValue != null;
                 smoothnessChannelNames = LitStyles.specularSmoothnessChannelNames;
                 BaseShaderGUI.TextureColorProps(materialEditor, LitStyles.specularMapText, properties.specGlossMap,

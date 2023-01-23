@@ -8,7 +8,7 @@ using quaternion = Unity.Mathematics.quaternion;
 
 namespace ZoroiscryingUnityShaderLibrary.Runtime.Global_Wind_System
 {
-    [ExecuteInEditMode]
+    // [ExecuteInEditMode]
     public class WindContributorObject : BaseWindContributor
     {
         #region Variables and Properties
@@ -41,8 +41,8 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.Global_Wind_System
 
         [Header("Fixed Wind Calculation")] // fixed wind can be local (direction follow rotation) or global
         [SerializeField] private bool fixedWindIsLocal = true;
-        [SerializeField] private Vector3 fixedWindVelocityLocal = Vector3.zero;
-        [SerializeField] private Vector3 fixedWindVelocityGlobal = Vector3.zero;
+        [SerializeField] private Vector3 fixedWindVelocityLocal = new Vector3(1, 0, 0);
+        [SerializeField] private Vector3 fixedWindVelocityGlobal = new Vector3(1, 0, 0);
 
         public bool FixedWindIsLocal => fixedWindIsLocal;
         public Vector3 FixedWindVelocityWorldSpace => 

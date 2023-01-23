@@ -69,6 +69,8 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.Global_Wind_System.Editor
 
         public override void OnInspectorGUI()
         {
+            Initialize();
+            
             //base.OnInspectorGUI();
             serializedObject.Update();
             
@@ -145,60 +147,7 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.Global_Wind_System.Editor
 
         private void OnSceneGUI()
         {
-            if (!_cached)
-            {
-                _windObject = (WindContributorObject)target;
-
-                _boxHandleID = GUIUtility.GetControlID(FocusType.Passive);
-                _sphereHandleID = GUIUtility.GetControlID(FocusType.Passive);
-                _cylinderHandleID = GUIUtility.GetControlID(FocusType.Passive);
-                _fixedCalculationHandleID = GUIUtility.GetControlID(FocusType.Passive);
-                _pointBasedCalculationHandleID = GUIUtility.GetControlID(FocusType.Passive);
-                _axisBasedCalculationHandleID = GUIUtility.GetControlID(FocusType.Passive);
-
-                // up down, left right, forward backward
-                _pointDirections[6].Normalize();
-                _pointDirections[7].Normalize();
-                _pointDirections[8].Normalize();
-                _pointDirections[9].Normalize();
-                _pointDirections[10].Normalize();
-                _pointDirections[11].Normalize();
-                _pointDirections[12].Normalize();
-                _pointDirections[13].Normalize();
-                
-                // 
-                _axisSurroundingPointsLocal[4].Normalize();
-                _axisSurroundingPointsLocal[5].Normalize();
-                _axisSurroundingPointsLocal[6].Normalize();
-                _axisSurroundingPointsLocal[7].Normalize();
-                
-                // Inspector GUI
-                _intensityMult = serializedObject.FindProperty("intensityMult");
-                _sizeMult = serializedObject.FindProperty("sizeMult");
-                _shape = serializedObject.FindProperty("shape");
-                _calculateType = serializedObject.FindProperty("calculateType");
-                
-                _boxWindLocalExtends = serializedObject.FindProperty("boxWindLocalExtends");
-                
-                _sphereWindExtend = serializedObject.FindProperty("sphereWindExtend");
-                
-                _cylinderWindLocalExtends = serializedObject.FindProperty("cylinderWindLocalExtends");
-                
-                _fixedWindIsLocal = serializedObject.FindProperty("fixedWindIsLocal");
-                _fixedWindVelocityLocal = serializedObject.FindProperty("fixedWindVelocityLocal");
-                _fixedWindVelocityGlobal = serializedObject.FindProperty("fixedWindVelocityGlobal");
-                
-                _centerPointLocal = serializedObject.FindProperty("centerPointLocal");
-                _pointBasedMaxWindSpeed = serializedObject.FindProperty("pointBasedMaxWindSpeed");
-                _pointBasedDistanceDecayInfluence = serializedObject.FindProperty("pointBasedDistanceDecayInfluence");
-                
-                _axisPointLocal = serializedObject.FindProperty("axisPointLocal");
-                _axisDirectionLocal = serializedObject.FindProperty("axisDirectionLocal");
-                _axisDistanceDecayInfluence = serializedObject.FindProperty("axisDistanceDecayInfluence");
-                _axisRotationVelocityMultiplier = serializedObject.FindProperty("axisRotationVelocityMultiplier");
-                
-                _cached = true;
-            }
+            Initialize();
 
             _selected = false || Selection.Contains(_windObject.gameObject);
 
@@ -220,6 +169,63 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.Global_Wind_System.Editor
         }
 
         #region Scene GUI
+
+        private void Initialize()
+        {
+            if (_cached) return;
+            
+            _windObject = (WindContributorObject)target;
+
+            _boxHandleID = GUIUtility.GetControlID(FocusType.Passive);
+            _sphereHandleID = GUIUtility.GetControlID(FocusType.Passive);
+            _cylinderHandleID = GUIUtility.GetControlID(FocusType.Passive);
+            _fixedCalculationHandleID = GUIUtility.GetControlID(FocusType.Passive);
+            _pointBasedCalculationHandleID = GUIUtility.GetControlID(FocusType.Passive);
+            _axisBasedCalculationHandleID = GUIUtility.GetControlID(FocusType.Passive);
+
+            // up down, left right, forward backward
+            _pointDirections[6].Normalize();
+            _pointDirections[7].Normalize();
+            _pointDirections[8].Normalize();
+            _pointDirections[9].Normalize();
+            _pointDirections[10].Normalize();
+            _pointDirections[11].Normalize();
+            _pointDirections[12].Normalize();
+            _pointDirections[13].Normalize();
+                
+            // 
+            _axisSurroundingPointsLocal[4].Normalize();
+            _axisSurroundingPointsLocal[5].Normalize();
+            _axisSurroundingPointsLocal[6].Normalize();
+            _axisSurroundingPointsLocal[7].Normalize();
+                
+            // Inspector GUI
+            _intensityMult = serializedObject.FindProperty("intensityMult");
+            _sizeMult = serializedObject.FindProperty("sizeMult");
+            _shape = serializedObject.FindProperty("shape");
+            _calculateType = serializedObject.FindProperty("calculateType");
+                
+            _boxWindLocalExtends = serializedObject.FindProperty("boxWindLocalExtends");
+                
+            _sphereWindExtend = serializedObject.FindProperty("sphereWindExtend");
+                
+            _cylinderWindLocalExtends = serializedObject.FindProperty("cylinderWindLocalExtends");
+                
+            _fixedWindIsLocal = serializedObject.FindProperty("fixedWindIsLocal");
+            _fixedWindVelocityLocal = serializedObject.FindProperty("fixedWindVelocityLocal");
+            _fixedWindVelocityGlobal = serializedObject.FindProperty("fixedWindVelocityGlobal");
+                
+            _centerPointLocal = serializedObject.FindProperty("centerPointLocal");
+            _pointBasedMaxWindSpeed = serializedObject.FindProperty("pointBasedMaxWindSpeed");
+            _pointBasedDistanceDecayInfluence = serializedObject.FindProperty("pointBasedDistanceDecayInfluence");
+                
+            _axisPointLocal = serializedObject.FindProperty("axisPointLocal");
+            _axisDirectionLocal = serializedObject.FindProperty("axisDirectionLocal");
+            _axisDistanceDecayInfluence = serializedObject.FindProperty("axisDistanceDecayInfluence");
+            _axisRotationVelocityMultiplier = serializedObject.FindProperty("axisRotationVelocityMultiplier");
+                
+            _cached = true;
+        }
 
         /// <summary>
         /// Draw box extends in world space

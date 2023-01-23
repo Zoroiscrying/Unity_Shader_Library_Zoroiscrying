@@ -12,6 +12,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
+using ZoroiscryingUnityShaderLibrary.Runtime.DynamicVegetation;
 using ZoroiscryingUnityShaderLibrary.Runtime.Global_Wind_System;
 using ZoroiscryingUnityShaderLibrary.Shaders.ComputeShaderRelated;
 
@@ -25,7 +26,7 @@ using ZoroiscryingUnityShaderLibrary.Shaders.ComputeShaderRelated;
 /// 4. Propagate the current wind directions and intensities by updating the 3D Texture.
 /// </summary>
 
-[ExecuteInEditMode]
+// [ExecuteInEditMode]
 public class GlobalWind3D : MonoBehaviour
 {
 	// debug CPU read back
@@ -96,6 +97,7 @@ public class GlobalWind3D : MonoBehaviour
 	
     // voxel size for wind texture sampling
     //[SerializeField] private float globalDensityMult = 1.0f; // position density for sampling
+    private readonly Vector3Int _windInheritanceNumThreads = new Vector3Int(8, 4, 8);
     private readonly Vector3Int _windInjectionNumThreads = new Vector3Int(8, 4, 8);
     private readonly Vector3Int _windDiffusionNumThreads = new Vector3Int(8, 4, 8);
     private readonly Vector3Int _windAdvectionNumThreads = new Vector3Int(8, 4, 8);
@@ -103,6 +105,7 @@ public class GlobalWind3D : MonoBehaviour
     // Render texture - 2 for ping pong processing
     private bool _betaIsTarget = false;
     private RenderTexture _windVolumeHalf16; // primary
+    
     //private RenderTexture _windVolumeBeta; // secondary
     // int texture format for interlock add (3 axis, 2 for ping pong)
     private RenderTexture _windVolumeSInt32RAlpha;
@@ -117,6 +120,7 @@ public class GlobalWind3D : MonoBehaviour
     private Vector3 VolumeResolutionMinusOne => VolumeResolution - new Vector3Int(1, 1, 1);
     
     // Profiling
+    public static readonly ProfilingSampler WindInheritanceProfilingSampler = new ProfilingSampler($"{nameof(GlobalWind3D)}.{nameof(WindInjection)}");
     public static readonly ProfilingSampler WindInjectionProfilingSampler = new ProfilingSampler($"{nameof(GlobalWind3D)}.{nameof(WindInjection)}");
     public static readonly ProfilingSampler WindDiffusionProfilingSampler = new ProfilingSampler($"{nameof(GlobalWind3D)}.{nameof(WindDiffusion)}");
     public static readonly ProfilingSampler WindAdvectionProfilingSampler = new ProfilingSampler($"{nameof(GlobalWind3D)}.{nameof(WindAdvection)}");
@@ -138,6 +142,12 @@ public class GlobalWind3D : MonoBehaviour
 	    public uint calculationBufferIndex;
 	    public float3 extendsLocal;
 	    public Matrix4x4 worldToLocalMatrix;
+
+	    public override string ToString()
+	    {
+		    return "Type: " + ((BaseWindContributor.WindCalculationType)calculationType) + "Buffer Index: " +
+		           calculationBufferIndex;
+	    }
     }
     private BoxWindParams[] _boxWindParams;
     private ComputeBuffer _boxWindParamsBuffer;
@@ -175,6 +185,11 @@ public class GlobalWind3D : MonoBehaviour
     public struct FixedCalculationParams
     {
 	    public float3 fixedWindVelocityWorldSpace;
+
+	    public override string ToString()
+	    {
+		    return "Fixed Velocity: " + fixedWindVelocityWorldSpace;
+	    }
     }
     private FixedCalculationParams[] _fixedCalculationParams;
     private ComputeBuffer _fixedCalculationParamsBuffer;
@@ -217,10 +232,9 @@ public class GlobalWind3D : MonoBehaviour
 	    EditorSceneManager.sceneSaved += OnSceneSaved;
 	    
 	    ValidateInput();
-	    InitResources();
+	    CheckIfNeedToInitResources();
 	    SetupWindConstantUniforms();
-	    //SetUpWindVariantUniforms();
-	    
+
 	    // command buffer for wind diffusion
 	    RenderPipelineManager.beginCameraRendering += HandleBeginCameraRendering;
 
@@ -254,14 +268,28 @@ public class GlobalWind3D : MonoBehaviour
 
     private void HandleBeginCameraRendering(ScriptableRenderContext context, Camera currentCamera)
     {
+	    // Center volume position variables calculation
+	    _centerVolumePositionLastFrame = centerVolumePosition;
+	    if (windCenterTransform)
+	    {
+		    centerVolumePosition = windCenterTransform.position;
+	    }
+	    _deltaVolumePositionThisFrame = centerVolumePosition - _centerVolumePositionLastFrame;
+	    
 	    // similar to update, process the texture, use cmd.Command to set shader keywords, textures, etc.
-	    // Injection -> Diffusion -> Advection -> Export
+	    // Inheritance -> Injection -> Diffusion -> Advection -> Export
 	    var cmd = CommandBufferPool.Get();
 	    cmd.Clear();
 	    cmd.SetExecutionFlags(CommandBufferExecutionFlags.AsyncCompute);
 	    
-	    // Wind Uniforms used across different operations
+	    // Wind Uniforms (variant) used across different operations
 	    SetUpWindVariantUniforms(cmd);
+	    
+	    // Wind Inheritance Transformation (Copy the whole texture and apply the center movement)
+	    using (new UnityEngine.Rendering.ProfilingScope(cmd, WindInheritanceProfilingSampler))
+	    {
+		    // WindInheritance(cmd);
+	    }
 	    
 	    // Injection
 	    using (new UnityEngine.Rendering.ProfilingScope(cmd, WindInjectionProfilingSampler))
@@ -294,6 +322,7 @@ public class GlobalWind3D : MonoBehaviour
 	    }
 
 	    cmd.SetGlobalTexture("_GlobalWindVolume3D", _windVolumeHalf16);
+	    // Async will make the 3D Texture hard to sync with other sampling methods (e.g., sample in VFX Graph)
 	    context.ExecuteCommandBufferAsync(cmd, ComputeQueueType.Default);
 	    //context.ExecuteCommandBuffer(cmd);
 	    cmd.Release();
@@ -301,18 +330,16 @@ public class GlobalWind3D : MonoBehaviour
 
     private void Update()
     {
-	    // Center volume position variables calculation
-	    _centerVolumePositionLastFrame = centerVolumePosition;
-	    if (windCenterTransform)
-	    {
-		    centerVolumePosition = windCenterTransform.position;
-	    }
-	    _deltaVolumePositionThisFrame = centerVolumePosition - _centerVolumePositionLastFrame;
-	    
 	    // Debug display
 	    if (debug3DScene)
 	    {
 		    Debug3DSceneDisplay();
+	    }
+
+	    if (Input.GetKeyDown(KeyCode.Space))
+	    {
+		    VegetationSwayGlobalManager.DebugComputeBuffer<FixedCalculationParams>(_fixedCalculationParamsBuffer.count, _fixedCalculationParamsBuffer);
+		    VegetationSwayGlobalManager.DebugComputeBuffer<BoxWindParams>(_boxWindParamsBuffer.count, _boxWindParamsBuffer);
 	    }
     }
 
@@ -361,6 +388,71 @@ public class GlobalWind3D : MonoBehaviour
 		ReleaseComputeBuffer(ref _debugArgsBuffer);
     }
     
+    #region Wind Inheritance
+    
+    private void SetUpForWindInheritance(int kernel, CommandBuffer cmd)
+    {
+	    ValidateInput();
+	    CheckIfNeedToInitResources();
+
+	    // setup wind inheritance parameters in the compute shader
+	    // render texture & parameters
+	    if (_betaIsTarget)
+	    {
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DXFrom",
+			    _windVolumeSInt32RAlpha);
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DYFrom",
+			    _windVolumeSInt32GAlpha);
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DZFrom",
+			    _windVolumeSInt32BAlpha);
+		    
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DXTo",
+			    _windVolumeSInt32RBeta);
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DYTo",
+			    _windVolumeSInt32GBeta);
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DZTo",
+			    _windVolumeSInt32BBeta);
+		    _betaIsTarget = !_betaIsTarget;
+	    }
+	    else
+	    {
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DXFrom",
+			    _windVolumeSInt32RBeta);
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DYFrom",
+			    _windVolumeSInt32GBeta);
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DZFrom",
+			    _windVolumeSInt32BBeta);
+		    
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DXTo",
+			    _windVolumeSInt32RAlpha);
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DYTo",
+			    _windVolumeSInt32GAlpha);
+		    cmd.SetComputeTextureParam(csWindInheritance, kernel, "_GlobalWindVolume3DZTo",
+			    _windVolumeSInt32BAlpha);
+		    _betaIsTarget = !_betaIsTarget;
+	    }
+	    // _DeltaWindCenterPosition and _WindVolumeSizeXYZ
+	    cmd.SetComputeVectorParam(csWindInheritance, "_DeltaWindCenterPosition", _deltaVolumePositionThisFrame);
+	    Debug.Log(_deltaVolumePositionThisFrame);
+	    Vector3 windVolumeSizeXYZ = VolumeResolution;
+	    windVolumeSizeXYZ *= sizePerVoxel;
+	    cmd.SetComputeVectorParam(csWindInheritance, "_WindVolumeSizeXYZ", windVolumeSizeXYZ);
+    }
+
+    private void WindInheritance(CommandBuffer cmd)
+    {
+	    int kernel = csWindInheritance.FindKernel("CSMain");
+        
+	    SetUpForWindInheritance(kernel, cmd);
+        
+	    cmd.DispatchCompute(csInjectWindDirectionAndIntensity, kernel, 
+		    VolumeResolution.x / _windInheritanceNumThreads.x,
+		    VolumeResolution.y / _windInheritanceNumThreads.y,
+		    VolumeResolution.z / _windInheritanceNumThreads.z);
+    }
+
+    #endregion
+    
     #region Wind Injection
 
     private uint RegisterNewWindCalculationType(WindContributorObject windContributorObject)
@@ -382,6 +474,8 @@ public class GlobalWind3D : MonoBehaviour
 			    // Debug.Log("Adding new fixed calculation velocity of: " + windContributorObject.FixedWindVelocityWorldSpace);
 			    _fixedCalculationParams[_fixedCalculationTypeIndex].fixedWindVelocityWorldSpace =
 				    windContributorObject.FixedWindVelocityWorldSpace;
+			    // 
+			    // Debug.Log(windContributorObject.FixedWindVelocityWorldSpace);
 			    bufferIndexIdentifier = _fixedCalculationTypeIndex;
 			    _fixedCalculationTypeIndex++;
 			    break;
@@ -430,7 +524,7 @@ public class GlobalWind3D : MonoBehaviour
 	    // need to recreate the compute buffer
 	    if (_fixedCalculationParamsBuffer == null || (fixedCalculationCount != _fixedCalculationParamsBuffer.count && fixedCalculationCount > 0))
 	    {
-		    CreateComputeBuffer(ref _fixedCalculationParamsBuffer, fixedCalculationCount, Marshal.SizeOf(typeof(FixedCalculationParams)));
+		    CheckIfNeedToCreateComputeBuffer(ref _fixedCalculationParamsBuffer, fixedCalculationCount, Marshal.SizeOf(typeof(FixedCalculationParams)));
 	    }
 
 	    if (_fixedCalculationParams is { Length: > 0 } && fixedCalculationCount > 0)
@@ -449,7 +543,7 @@ public class GlobalWind3D : MonoBehaviour
 	    // need to recreate the compute buffer
 	    if (_pointBasedCalculationParamsBuffer == null || (pointBasedCalculationCount != _pointBasedCalculationParamsBuffer.count && pointBasedCalculationCount > 0))
 	    {
-		    CreateComputeBuffer(ref _pointBasedCalculationParamsBuffer, pointBasedCalculationCount, Marshal.SizeOf(typeof(PointBasedCalculationParams)));
+		    CheckIfNeedToCreateComputeBuffer(ref _pointBasedCalculationParamsBuffer, pointBasedCalculationCount, Marshal.SizeOf(typeof(PointBasedCalculationParams)));
 	    }
 
 	    if (_pointBasedCalculationParams is {Length : > 0} && pointBasedCalculationCount > 0)
@@ -467,7 +561,7 @@ public class GlobalWind3D : MonoBehaviour
 	    // need to recreate the compute buffer
 	    if (_axisBasedCalculationParamsBuffer == null || (axisBasedCalculationCount != _axisBasedCalculationParamsBuffer.count && axisBasedCalculationCount > 0))
 	    {
-		    CreateComputeBuffer(ref _axisBasedCalculationParamsBuffer, axisBasedCalculationCount, Marshal.SizeOf(typeof(AxisBasedCalculationParams)));
+		    CheckIfNeedToCreateComputeBuffer(ref _axisBasedCalculationParamsBuffer, axisBasedCalculationCount, Marshal.SizeOf(typeof(AxisBasedCalculationParams)));
 	    }
 
 	    if (_axisBasedCalculationParams is {Length : > 0} && axisBasedCalculationCount > 0)
@@ -527,7 +621,7 @@ public class GlobalWind3D : MonoBehaviour
 		// need to recreate the compute buffer
 	    if (_boxWindParamsBuffer == null || (existingBoxContributorCount != _boxWindParamsBuffer.count && existingBoxContributorCount > 0))
 	    {
-		    CreateComputeBuffer(ref _boxWindParamsBuffer, existingBoxContributorCount, Marshal.SizeOf(typeof(BoxWindParams)));
+		    CheckIfNeedToCreateComputeBuffer(ref _boxWindParamsBuffer, existingBoxContributorCount, Marshal.SizeOf(typeof(BoxWindParams)));
 	    }
 	    
 	    csInjectWindDirectionAndIntensity.SetInt("_boxWindCount", existingBoxContributorCount);
@@ -574,7 +668,7 @@ public class GlobalWind3D : MonoBehaviour
 		// need to recreate the compute buffer
 	    if (_sphereWindParamsBuffer == null || (existingSphereContributorCount != _sphereWindParamsBuffer.count && existingSphereContributorCount > 0))
 	    {
-		    CreateComputeBuffer(ref _sphereWindParamsBuffer, existingSphereContributorCount, Marshal.SizeOf(typeof(SphereWindParams)));
+		    CheckIfNeedToCreateComputeBuffer(ref _sphereWindParamsBuffer, existingSphereContributorCount, Marshal.SizeOf(typeof(SphereWindParams)));
 	    }
 	    
 	    csInjectWindDirectionAndIntensity.SetInt("_sphereWindCount", existingSphereContributorCount);
@@ -620,7 +714,7 @@ public class GlobalWind3D : MonoBehaviour
 		// need to recreate the compute buffer
 	    if (_cylinderWindParamsBuffer == null || (existingCylinderContributorCount != _cylinderWindParamsBuffer.count && existingCylinderContributorCount > 0))
 	    {
-		    CreateComputeBuffer(ref _cylinderWindParamsBuffer, existingCylinderContributorCount, Marshal.SizeOf(typeof(CylinderWindParams)));
+		    CheckIfNeedToCreateComputeBuffer(ref _cylinderWindParamsBuffer, existingCylinderContributorCount, Marshal.SizeOf(typeof(CylinderWindParams)));
 	    }
 	    
 	    csInjectWindDirectionAndIntensity.SetInt("_cylinderWindCount", existingCylinderContributorCount);
@@ -631,7 +725,7 @@ public class GlobalWind3D : MonoBehaviour
     private void SetUpForWindInjection(int kernel, CommandBuffer cmd)
     {
         ValidateInput();
-        InitResources();
+        CheckIfNeedToInitResources();
         
         SetUpBoxWindComputeBuffers(kernel, cmd);
         SetUpSphereWindComputeBuffers(kernel, cmd);
@@ -682,7 +776,7 @@ public class GlobalWind3D : MonoBehaviour
     }
 
     #endregion
-    
+
     #region Wind Diffusion
 
 	private void SetUpForWindDiffusion(CommandBuffer cmd)
@@ -757,14 +851,15 @@ public class GlobalWind3D : MonoBehaviour
     	    ValidateInput();
     	    
     	    // cmd.SetComputeFloatParam(csWindAdvection, "_DeltaTime", Time.deltaTime);
-    	    cmd.SetComputeIntParams(csWindAdvection, "_WindVolumeTextureSize", new int[]{32, 16, 32});
+            cmd.SetComputeIntParams(csWindAdvection, "_WindVolumeTextureSize", new int[]{32, 16, 32});
+            cmd.SetComputeFloatParam(csWindAdvection, "_WindVoxelSize", sizePerVoxel);
     	    cmd.SetComputeFloatParam(csWindAdvection, "_WindAttenuationStrength", windAdvectionAttenuationStrength);
             cmd.SetComputeFloatParam(csWindAdvection, "_WindAdvectionIntensity", windAdvectionIntensity);
     	    
     	    // Setup textures
     	    if (_betaIsTarget) // target is beta (prev prev is beta)
     	    {
-    		    cmd.SetGlobalTexture("_WindTexturePrevX", _windVolumeSInt32RAlpha);
+	            cmd.SetGlobalTexture("_WindTexturePrevX", _windVolumeSInt32RAlpha);
     		    cmd.SetGlobalTexture("_WindTexturePrevY", _windVolumeSInt32GAlpha);
     		    cmd.SetGlobalTexture("_WindTexturePrevZ", _windVolumeSInt32BAlpha);
     		    cmd.SetGlobalTexture("_WindTexturePrevPrevX", _windVolumeSInt32RBeta);
@@ -954,15 +1049,17 @@ public class GlobalWind3D : MonoBehaviour
     	    _debugHandlePositionBuffer = new ComputeBuffer(InstanceCount, 16);
     	    Vector4[] positions = new Vector4[InstanceCount];
     	    // https://stackoverflow.com/questions/7367770/how-to-flatten-or-index-3d-array-in-1d-array
-    	    for (int i = 0; i < VolumeResolution.x; i++)
+    	    for (int x = 0; x < VolumeResolution.x; x++)
     	    {
-    		    for (int j = 0; j < VolumeResolution.y; j++)
+    		    for (int y = 0; y < VolumeResolution.y; y++)
     		    {
-    			    for (int k = 0; k < VolumeResolution.z; k++)
+    			    for (int z = 0; z < VolumeResolution.z; z++)
     			    {
     				    // id as (i, j, k), calculate flattened id and its corresponding position
-    				    positions[i + VolumeResolution.x * (j + VolumeResolution.y * k)] =
-    					    sizePerVoxel * (new Vector3(i, j, k) - VolumeResolutionMinusOne / 2.0f);
+                        // positions[(x * VolumeResolution.y + y) * VolumeResolution.z + z] =
+	                    //     sizePerVoxel * (new Vector3(x, y, z) - VolumeResolutionMinusOne / 2.0f);
+                        positions[x + VolumeResolution.x * (y + VolumeResolution.y * z)] =
+    					    sizePerVoxel * (new Vector3(x, y, z) - VolumeResolutionMinusOne / 2.0f);
     				    //Debug.Log("New position offset: " +
     				    //          positions[i + _volumeResolution.x * (j + _volumeResolution.y * k)]);
     			    }
@@ -1060,22 +1157,22 @@ public class GlobalWind3D : MonoBehaviour
     /// <summary>
     /// Create 3D Texture and Command Buffers for future use.
     /// </summary>
-    private void InitResources ()
+    private void CheckIfNeedToInitResources ()
     {
 	    _windExportFunctionNoise = new LocalKeyword(csIntToHalfExport, "FUNCTION_NOISE");
 	    _windExportTextureNoise = new LocalKeyword(csIntToHalfExport, "TEXTURE_NOISE");
 	    
 	    // Volume
-	    InitHalfVolume(ref _windVolumeHalf16);
-	    //InitHalfVolume(ref _windVolumeBeta);
+	    CheckIfNeedToInitHalfVolume(ref _windVolumeHalf16);
+	    //CheckIfNeedToInitHalfVolume(ref _windVolumeBeta);
 	    
 	    // Int volumes
-	    InitInt32Volume(ref _windVolumeSInt32RAlpha);
-	    InitInt32Volume(ref _windVolumeSInt32GAlpha);
-	    InitInt32Volume(ref _windVolumeSInt32BAlpha);
-	    InitInt32Volume(ref _windVolumeSInt32RBeta);
-	    InitInt32Volume(ref _windVolumeSInt32GBeta);
-	    InitInt32Volume(ref _windVolumeSInt32BBeta);
+	    CheckIfNeedToInitInt32Volume(ref _windVolumeSInt32RAlpha);
+	    CheckIfNeedToInitInt32Volume(ref _windVolumeSInt32GAlpha);
+	    CheckIfNeedToInitInt32Volume(ref _windVolumeSInt32BAlpha);
+	    CheckIfNeedToInitInt32Volume(ref _windVolumeSInt32RBeta);
+	    CheckIfNeedToInitInt32Volume(ref _windVolumeSInt32GBeta);
+	    CheckIfNeedToInitInt32Volume(ref _windVolumeSInt32BBeta);
 	    
 	    // Compute buffers
 	    int fixedCalculationCount = 0, pointBasedCalculationCount = 0, axisBasedCalculationCount = 0;
@@ -1109,18 +1206,18 @@ public class GlobalWind3D : MonoBehaviour
 	        }
 	    }
 
-	    CreateComputeBuffer(ref _boxWindParamsBuffer, boxContributorCount, Marshal.SizeOf(typeof(BoxWindParams)));
-	    CreateComputeBuffer(ref _cylinderWindParamsBuffer, cylinderContributorCount, Marshal.SizeOf(typeof(CylinderWindParams)));
-	    CreateComputeBuffer(ref _sphereWindParamsBuffer, sphereContributorCount, Marshal.SizeOf(typeof(SphereWindParams)));
+	    CheckIfNeedToCreateComputeBuffer(ref _boxWindParamsBuffer, boxContributorCount, Marshal.SizeOf(typeof(BoxWindParams)));
+	    CheckIfNeedToCreateComputeBuffer(ref _cylinderWindParamsBuffer, cylinderContributorCount, Marshal.SizeOf(typeof(CylinderWindParams)));
+	    CheckIfNeedToCreateComputeBuffer(ref _sphereWindParamsBuffer, sphereContributorCount, Marshal.SizeOf(typeof(SphereWindParams)));
 	    
-	    CreateComputeBuffer(ref _fixedCalculationParamsBuffer, fixedCalculationCount, Marshal.SizeOf(typeof(FixedCalculationParams)));
-	    CreateComputeBuffer(ref _pointBasedCalculationParamsBuffer, pointBasedCalculationCount, Marshal.SizeOf(typeof(PointBasedCalculationParams)));
-	    CreateComputeBuffer(ref _axisBasedCalculationParamsBuffer, axisBasedCalculationCount, Marshal.SizeOf(typeof(AxisBasedCalculationParams)));
+	    CheckIfNeedToCreateComputeBuffer(ref _fixedCalculationParamsBuffer, fixedCalculationCount, Marshal.SizeOf(typeof(FixedCalculationParams)));
+	    CheckIfNeedToCreateComputeBuffer(ref _pointBasedCalculationParamsBuffer, pointBasedCalculationCount, Marshal.SizeOf(typeof(PointBasedCalculationParams)));
+	    CheckIfNeedToCreateComputeBuffer(ref _axisBasedCalculationParamsBuffer, axisBasedCalculationCount, Marshal.SizeOf(typeof(AxisBasedCalculationParams)));
 	    // dummy buffer preventing null data injecting
-	    CreateComputeBuffer(ref _dummyComputeBuffer, 1, 4);
+	    CheckIfNeedToCreateComputeBuffer(ref _dummyComputeBuffer, 1, 4);
     }
 
-    private void InitHalfVolume(ref RenderTexture volume)
+    private void CheckIfNeedToInitHalfVolume(ref RenderTexture volume)
     {
 	    if (volume)
 	    {
@@ -1135,7 +1232,7 @@ public class GlobalWind3D : MonoBehaviour
 	    volume.Create();
     }
 
-    private void InitInt32Volume(ref RenderTexture volume)
+    private void CheckIfNeedToInitInt32Volume(ref RenderTexture volume)
     {
 	    if (volume)
 	    {
@@ -1150,7 +1247,7 @@ public class GlobalWind3D : MonoBehaviour
 	    volume.Create();
     }
 
-    private void CreateComputeBuffer(ref ComputeBuffer buffer, int count, int stride)
+    private void CheckIfNeedToCreateComputeBuffer(ref ComputeBuffer buffer, int count, int stride)
     {
 	    if (buffer != null && buffer.count == count)
 		    return;

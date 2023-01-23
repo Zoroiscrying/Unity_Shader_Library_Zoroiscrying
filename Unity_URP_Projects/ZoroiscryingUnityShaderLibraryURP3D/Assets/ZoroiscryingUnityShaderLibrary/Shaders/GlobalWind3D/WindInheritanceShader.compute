@@ -1,14 +1,120 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
-RWTexture2D<float4> Result;
+float3 _DeltaWindCenterPosition;
+float _WindVoxelSize;
+uint3 _WindVolumeTextureSize;
+
+uniform RWTexture3D<int> _GlobalWindVolume3DXFrom;
+uniform RWTexture3D<int> _GlobalWindVolume3DYFrom;
+uniform RWTexture3D<int> _GlobalWindVolume3DZFrom;
+
+uniform RWTexture3D<int> _GlobalWindVolume3DXTo;
+uniform RWTexture3D<int> _GlobalWindVolume3DYTo;
+uniform RWTexture3D<int> _GlobalWindVolume3DZTo;
+
+bool OutsideRangeOfZeroOne(float input)
+{
+    if (input < 0 || input > 1)
+    {
+        return true;
+    }
+    return false;
+}
+
+void CalculateWeights(inout float weights[8], float3 weight_floor, float3 weight_ceil)
+{
+    weights[0] = weight_floor.x * weight_floor.y * weight_floor.z;
+    weights[1] = weight_floor.x * weight_floor.y * weight_ceil.z;
+    weights[2] = weight_floor.x * weight_ceil.y * weight_floor.z;
+    weights[3] = weight_floor.x * weight_ceil.y * weight_ceil.z;
+    weights[4] = weight_ceil.x * weight_floor.y * weight_floor.z;
+    weights[5] = weight_ceil.x * weight_floor.y * weight_ceil.z;
+    weights[6] = weight_ceil.x * weight_ceil.y * weight_floor.z;
+    weights[7] = weight_ceil.x * weight_ceil.y * weight_ceil.z;
+}
+
+inline int TrilinearSampling_OneAxis(uniform RWTexture3D<int> texture_one_axis,
+    const int floor_id_x, const int floor_id_y, const int floor_id_z,
+    const int ceil_id_x, const int ceil_id_y, const int ceil_id_z,
+    const float floor_weight_x, const float ceil_weight_x,
+    const float floor_weight_y, const float ceil_weight_y,
+    const float floor_weight_z, const float ceil_weight_z)
+{
+    // 000, 100, 001, 101, 010, 110, 011, 111
+    const float c00 = floor_weight_x * texture_one_axis[uint3(floor_id_x, floor_id_y, floor_id_z)] + ceil_weight_x * texture_one_axis[uint3(ceil_id_x, floor_id_y, floor_id_z)];
+    const float c01 = floor_weight_x * texture_one_axis[uint3(floor_id_x, floor_id_y, ceil_id_z)] + ceil_weight_x * texture_one_axis[uint3(ceil_id_x, floor_id_y, ceil_id_z)];
+    const float c10 = floor_weight_x * texture_one_axis[uint3(floor_id_x, ceil_id_y, floor_id_z)] + ceil_weight_x * texture_one_axis[uint3(ceil_id_x, ceil_id_y, floor_id_z)];
+    const float c11 = floor_weight_x * texture_one_axis[uint3(floor_id_x, ceil_id_y, ceil_id_z)] + ceil_weight_x * texture_one_axis[uint3(ceil_id_x, ceil_id_y, ceil_id_z)];
+
+    const float c0 = c00 * floor_weight_y + c10 * ceil_weight_y;
+    const float c1 = c01 * floor_weight_y + c11 * ceil_weight_y;
+
+    return c0 * floor_weight_z + c1 * ceil_weight_z;
+}
+
+// Coordinates outside the 0 and 1 range will be outputting 0
+void TrilinearSampling_ClampZero(
+    uniform RWTexture3D<int> texture_r, uniform RWTexture3D<int> texture_g, uniform RWTexture3D<int> texture_b,
+    float3 uvw_coord, const uint3 texture_size, out int r, out int g, out int b)
+{
+    r = g = b = 0;
+    if (OutsideRangeOfZeroOne(uvw_coord.x) || OutsideRangeOfZeroOne(uvw_coord.y) || OutsideRangeOfZeroOne(uvw_coord.z))
+    {
+        return;
+    }
+
+    // https://en.wikipedia.org/wiki/Trilinear_interpolation
+    float3 uvw_text_index = uvw_coord * texture_size;
+    
+    const uint floor_id_x = uint(uvw_text_index.x);
+    const uint ceil_id_x = floor_id_x + 1;
+    const float ceil_weight_x = (uvw_text_index.x - floor_id_x);
+    const float floor_weight_x = 1 - ceil_weight_x;
+    
+    const uint floor_id_y = uint(uvw_text_index.y);
+    const uint ceil_id_y = floor_id_y + 1;
+    const float ceil_weight_y = (uvw_text_index.y - floor_id_y);
+    const float floor_weight_y = 1 - ceil_weight_y;
+    
+    const uint floor_id_z = uint(uvw_text_index.z);
+    const uint ceil_id_z = floor_id_z + 1;
+    const float ceil_weight_z = (uvw_text_index.z - floor_id_z);
+    const float floor_weight_z = 1 - ceil_weight_z;
+
+    // How to improve this part? Does inline solve the efficiency issue?
+    
+    // Can calculate weights individually for each voxel cell (See the 'CalculateWeights' function above)
+    r = TrilinearSampling_OneAxis(texture_r,
+        floor_id_x, floor_id_y, floor_id_z, ceil_id_x, ceil_id_y, ceil_id_z,
+        floor_weight_x, ceil_weight_x, floor_weight_y, ceil_weight_y, floor_weight_z, ceil_weight_z);
+    g = TrilinearSampling_OneAxis(texture_g,
+        floor_id_x, floor_id_y, floor_id_z, ceil_id_x, ceil_id_y, ceil_id_z,
+        floor_weight_x, ceil_weight_x, floor_weight_y, ceil_weight_y, floor_weight_z, ceil_weight_z);
+    b = TrilinearSampling_OneAxis(texture_b,
+        floor_id_x, floor_id_y, floor_id_z, ceil_id_x, ceil_id_y, ceil_id_z,
+        floor_weight_x, ceil_weight_x, floor_weight_y, ceil_weight_y, floor_weight_z, ceil_weight_z);
+}
 
 [numthreads(8,4,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    // TODO: insert actual code here!
-
-    Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+    // if deltaPosition is (1, 1, 1) in world space
+    // we need to convert the delta position in WS to UVW space
+    // and let To sample the From
+    
+    // When center moves (1, 1, 1), the From is not valid anymore,
+    // we need to let (x, y, z) of To sample the (x+1, y+1, z+1) of the From
+    int r, g, b;
+    
+    // Todo:: account for wind rotation, truly move the world space into wind space
+    // conversion from world space to texture index space
+    const float3 uvw = ((float3)id + _DeltaWindCenterPosition/_WindVoxelSize) / (float3)_WindVolumeTextureSize;
+    
+    TrilinearSampling_ClampZero(_GlobalWindVolume3DXFrom, _GlobalWindVolume3DYFrom, _GlobalWindVolume3DZFrom,
+        uvw, _WindVolumeTextureSize, r, g, b);
+    
+    _GlobalWindVolume3DXTo[id] = r;
+    _GlobalWindVolume3DYTo[id] = g;
+    _GlobalWindVolume3DZTo[id] = b;
 }

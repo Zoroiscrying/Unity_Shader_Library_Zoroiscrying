@@ -84,8 +84,8 @@ Varyings DebugWindPassVertex(Attributes input, uint instanceID : SV_InstanceID)
     Unity_RotateAboutAxis_Radians_float(input.positionOS, axis, angle, newPositionOS);
     
     // local position offset + local to world position + scale calculation
-    float scale = saturate((output.WindDirectionSpeed.w - 0.5)/(4.5 - 0.5));
-    positionWS.xyz = data.xyz + _WindVolumeCenterPosition.xyz + newPositionOS * 5 * max(scale * 3, 0.75);
+    float scale = saturate((output.WindDirectionSpeed.w - 0.5)/(10.5 - 0.5));
+    positionWS.xyz = data.xyz + _WindVolumeCenterPosition.xyz + newPositionOS * 5 * max(scale * 3, 1.0);
     output.positionCS = TransformWorldToHClip(positionWS.xyz);
     
     //output.uv = input.uv;

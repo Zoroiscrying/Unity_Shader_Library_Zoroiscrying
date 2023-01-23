@@ -165,8 +165,6 @@ half SampleHalfToneTexture(float2 uv)
     return SAMPLE_TEXTURE2D(_HalfToneTexture, sampler_HalfToneTexture, uv).x;
 }
 
-
-
 // Returns clear coat parameters
 // .x/.r == mask
 // .y/.g == smoothness

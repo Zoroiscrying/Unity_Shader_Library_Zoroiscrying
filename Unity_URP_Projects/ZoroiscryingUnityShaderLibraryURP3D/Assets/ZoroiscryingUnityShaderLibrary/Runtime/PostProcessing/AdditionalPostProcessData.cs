@@ -35,13 +35,13 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.PostProcessing
             public void Init()
             {
                 invertColorShader = Shader.Find("PostProcess/PostProcessingTemplateShader");
-                utilityShader = Shader.Find("PostProcess/Utility");
                 animateLineShader = Shader.Find("PostProcess/AnimateSpeedLine");
                 imageBasedOutlineShader = Shader.Find("PostProcess/ImageBasedOutline");
                 depthNormalsOutlineShader = Shader.Find("PostProcess/DepthNormalOutline");
                 postProcessLightVolumeShader = Shader.Find("PostProcess/PostProcessLightVolume");
                 gaussianBlurDepthAwareness = Shader.Find("PostProcess/GaussianBlur");
                 globalWindDebugShader = Shader.Find("PostProcess/DebugGlobalWind");
+                utilityShader = Shader.Find("PostProcess/Utility");
             }
         }
 

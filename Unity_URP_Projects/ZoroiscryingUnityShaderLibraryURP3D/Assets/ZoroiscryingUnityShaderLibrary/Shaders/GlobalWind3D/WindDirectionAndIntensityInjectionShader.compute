@@ -10,6 +10,7 @@
 
 // Wind Volume XYZ Axis separated
 #define FXDPT_SIZE (1 << 16) // negative 16, positive 16 => int32 texture
+
 RWTexture3D<int> _GlobalWindVolume3DX;
 RWTexture3D<int> _GlobalWindVolume3DY;
 RWTexture3D<int> _GlobalWindVolume3DZ;
@@ -211,9 +212,9 @@ float3 BoxWinds(float3 positionWS)
         float4 localVoxelPosition = mul(_boxWindContributors[i].worldToLocal, float4(positionWS, 1));
         float3 extendsLocal = _boxWindContributors[i].extendsLocal;
         // compare the local position with extends
-        float withInX = step(abs(localVoxelPosition.x), extendsLocal.x/2); // step (y,x) 1 if the x parameter is greater than or equal to the y parameter; otherwise, 0.
-        float withInY = step(abs(localVoxelPosition.y), extendsLocal.y/2);
-        float withInZ = step(abs(localVoxelPosition.z), extendsLocal.z/2);
+        const float withInX = step(abs(localVoxelPosition.x), extendsLocal.x/2.0f); // step (y,x) 1 if the x parameter is greater than or equal to the y parameter; otherwise, 0.
+        const float withInY = step(abs(localVoxelPosition.y), extendsLocal.y/2.0f);
+        const float withInZ = step(abs(localVoxelPosition.z), extendsLocal.z/2.0f);
         
         boxWindIntensity = withInX * withInY * withInZ;
         
@@ -221,16 +222,17 @@ float3 BoxWinds(float3 positionWS)
         switch (_boxWindContributors[i].calculationType)
         {
             case 0:
-                windCalculationResult += FixedCalculation(_boxWindContributors[i].calculationBufferIndex);
+                windCalculationResult = FixedCalculation(_boxWindContributors[i].calculationBufferIndex);
+                // windCalculationResult = float3(0, 0, 5);
                 break;
             case 1:
-                windCalculationResult += PointBasedCalculation(_boxWindContributors[i].calculationBufferIndex, positionWS);
+                windCalculationResult = PointBasedCalculation(_boxWindContributors[i].calculationBufferIndex, positionWS);
                 break;
             case 2:
-                windCalculationResult += AxisBasedCalculation(_boxWindContributors[i].calculationBufferIndex, positionWS);
+                windCalculationResult = AxisBasedCalculation(_boxWindContributors[i].calculationBufferIndex, positionWS);
                 break;
             default:
-                windCalculationResult += 0;
+                windCalculationResult = 0;
                 break;
         }
     }
@@ -249,8 +251,8 @@ float3 CylinderWinds(float3 positionWS)
         float2 extendsLocal = _cylinderWindContributors[i].extendsLocal;
         // compare the local position with extends
         const float distanceSquared = max(Length2(localVoxelPosition.xyz), 0.0f);
-        float withInX = step(distanceSquared, extendsLocal.x); // step (y,x) 1 if the x parameter is greater than or equal to the y parameter; otherwise, 0.
-        float withInY = step(abs(localVoxelPosition.y), extendsLocal.y/2);
+        const float withInX = step(distanceSquared, extendsLocal.x); // step (y,x) 1 if the x parameter is greater than or equal to the y parameter; otherwise, 0.
+        const float withInY = step(abs(localVoxelPosition.y), extendsLocal.y/2.0f);
 
         cylinderWindIntensity = withInX * withInY;
         
@@ -258,16 +260,16 @@ float3 CylinderWinds(float3 positionWS)
         switch (_cylinderWindContributors[i].calculationType)
         {
         case 0:
-            windCalculationResult += FixedCalculation(_cylinderWindContributors[i].calculationBufferIndex);
+            windCalculationResult = FixedCalculation(_cylinderWindContributors[i].calculationBufferIndex);
             break;
         case 1:
-            windCalculationResult += PointBasedCalculation(_cylinderWindContributors[i].calculationBufferIndex, positionWS);
+            windCalculationResult = PointBasedCalculation(_cylinderWindContributors[i].calculationBufferIndex, positionWS);
             break;
         case 2:
-            windCalculationResult += AxisBasedCalculation(_cylinderWindContributors[i].calculationBufferIndex, positionWS);
+            windCalculationResult = AxisBasedCalculation(_cylinderWindContributors[i].calculationBufferIndex, positionWS);
             break;
         default:
-            windCalculationResult += 0;
+            windCalculationResult = 0;
             break;
         }
     }
@@ -286,25 +288,25 @@ float3 SphereWinds(float3 positionWS)
         float3 localVoxelPosition = positionWS - _sphereWindContributors[i].centerPositionWorldSpace;
         // compare the local position with radius
         const float distanceSquared = max(Length2(localVoxelPosition), 0.0f);
-        float withInX = step(distanceSquared, _sphereWindContributors[i].extendSquared); // step (y,x) 1 if the x parameter is greater than or equal to the y parameter; otherwise, 0.
+        const float withInX = step(distanceSquared, _sphereWindContributors[i].extendSquared); // step (y,x) 1 if the x parameter is greater than or equal to the y parameter; otherwise, 0.
 
         sphereWindIntensity = withInX;
         
         // get the parameters needed to calculate wind directions and intensities
         switch (_sphereWindContributors[i].calculationType)
         {
-        case 0:
-            windCalculationResult += FixedCalculation(_sphereWindContributors[i].calculationBufferIndex);
-            break;
-        case 1:
-            windCalculationResult += PointBasedCalculation(_sphereWindContributors[i].calculationBufferIndex, positionWS);
-            break;
-        case 2:
-            windCalculationResult += AxisBasedCalculation(_sphereWindContributors[i].calculationBufferIndex, positionWS);
-            break;
-        default:
-            windCalculationResult += 0;
-            break;
+            case 0:
+                windCalculationResult = FixedCalculation(_sphereWindContributors[i].calculationBufferIndex);
+                break;
+            case 1:
+                windCalculationResult = PointBasedCalculation(_sphereWindContributors[i].calculationBufferIndex, positionWS);
+                break;
+            case 2:
+                windCalculationResult = AxisBasedCalculation(_sphereWindContributors[i].calculationBufferIndex, positionWS);
+                break;
+            default:
+                windCalculationResult = 0;
+                break;
         }
     }
     return windCalculationResult * sphereWindIntensity;
@@ -316,7 +318,8 @@ float3 SphereWinds(float3 positionWS)
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float3 positionWS = 0;
-    positionWS = (float3(id) - float3(15.5, 7.5, 15.5)) * _WindVolumeVoxelSize + _WindVolumeCenterPosition.xyz;
+    // positionWS = (float3(id) - float3(15.5f, 7.5f, 15.5f)) * _WindVolumeVoxelSize + _WindVolumeCenterPosition.xyz;
+    positionWS = (float3(id) - float3(15.0f, 7.0f, 15.0f)) * _WindVolumeVoxelSize + _WindVolumeCenterPosition.xyz;
     
     float3 windWithIntensity = 0;
 
@@ -338,6 +341,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //float3 dir = windWithIntensity/mag;
     output.rgb = windWithIntensity;
     output.a = 0; // not used
+
+    // output = float4(1000, 0, 0, 0);
+    
     _GlobalWindVolume3DX[id] += (int)(output.x * FXDPT_SIZE);
     _GlobalWindVolume3DY[id] += (int)(output.y * FXDPT_SIZE);
     _GlobalWindVolume3DZ[id] += (int)(output.z * FXDPT_SIZE);

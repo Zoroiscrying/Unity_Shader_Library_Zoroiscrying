@@ -1,0 +1,120 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ProcessSway
+#pragma kernel CopyBuffers
+#pragma kernel AddInstance
+#pragma kernel RemoveInstance
+
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "../GlobalWind3D/SampleGlobalWind3D.hlsl"
+
+struct SwayObjectParameter
+{
+    float WindStrength;
+    float ObjectMass;
+    float SpringStrength;
+    float SpringDampen;
+    float3 WorldPosition;
+};
+
+float deltaTime;
+
+// the current relative position of the spring
+uint SwayInstancesCount;
+RWStructuredBuffer<float3> SwayVectors;
+RWStructuredBuffer<float3> SwayVelocities;
+RWStructuredBuffer<SwayObjectParameter> SwayObjectParameters;
+
+[numthreads(8,1,1)]
+void ProcessSway (uint3 id : SV_DispatchThreadID)
+{
+    const SwayObjectParameter swayObjParameter = SwayObjectParameters[id.x];
+    // Spring motion - F = k * s; a = F/m; V = V0 + at; S = S0 + Vt;
+    // const float3 windVelocity = float3(sin(_Time.y + swayObjParameter.WorldPosition.x), 0, cos(_Time.y + swayObjParameter.WorldPosition.z));
+    const float3 windVelocity = SampleWindDirectionVelocityFragment(swayObjParameter.WorldPosition);
+    const float windSpeed = length(windVelocity);
+    const float3 windDirection = windVelocity * rcp(max(REAL_MIN, windSpeed));
+    
+    const float3 swayVector = SwayVectors[id.x];
+    const float swayDistance = length(swayVector);
+    const float3 swayDirection = swayVector * rcp(max(REAL_MIN, swayDistance));
+
+    // the force of the wind and the force of the spring
+    // a = F / m
+    const float3 springForce =
+        -swayDirection * swayDistance * swayObjParameter.SpringStrength +
+            windDirection * windSpeed * swayObjParameter.WindStrength;
+    const float3 springAcc = springForce / max(REAL_MIN, swayObjParameter.ObjectMass);
+
+    // v = v0 + at;
+    // s = s0 + vt;
+    const float3 swayVelocity = (SwayVelocities[id.x] + springAcc * deltaTime) * swayObjParameter.SpringDampen;
+    const float3 swayVectorModified = swayVector + swayVelocity * deltaTime;
+
+    SwayVelocities[id.x] = swayVelocity;
+    SwayVectors[id.x] = swayVectorModified;
+    // SwayVectors[id.x] = 0;
+    // SwayVectors[id.x] = float3(0, 0, sin(id.x + _Time.y));
+}
+
+RWStructuredBuffer<float3> SwayVectorsEnlarged;
+RWStructuredBuffer<float3> SwayVelocitiesEnlarged;
+RWStructuredBuffer<SwayObjectParameter> SwayObjectParametersEnlarged;
+
+uint CurrentDataTailIndex;
+
+[numthreads(8,1,1)]
+void CopyBuffers (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x < CurrentDataTailIndex)
+    {
+        SwayVectorsEnlarged[id.x] = SwayVectors[id.x];
+        SwayVelocitiesEnlarged[id.x] = SwayVelocities[id.x];
+        SwayObjectParametersEnlarged[id.x] = SwayObjectParameters[id.x];
+        // SwayVectorsEnlarged[id.x] = 0;
+        // SwayVelocitiesEnlarged[id.x] = 0;
+        // SwayObjectParametersEnlarged[id.x] = (SwayObjectParameter)1;
+    }
+    else
+    {
+        SwayVectorsEnlarged[id.x] = 0;
+        SwayVelocitiesEnlarged[id.x] = 0;
+        SwayObjectParametersEnlarged[id.x] = (SwayObjectParameter)0;
+    }
+}
+
+uint DisabledInstanceCount;
+uint AddInstanceCount;
+uint CurrentSwayListTailIndex;
+StructuredBuffer<uint> InstanceIndexDisabledList;
+StructuredBuffer<SwayObjectParameter> SwayObjectParametersToAdd;
+
+[numthreads(8,1,1)]
+void AddInstance (uint3 id : SV_DispatchThreadID)
+{
+    // only add data that we are allocating
+    if (id.x < AddInstanceCount)
+    {
+        // override existing disabled data
+        int index = 0;
+        if (id.x < DisabledInstanceCount)
+        {
+            index = InstanceIndexDisabledList[id.x];
+        }
+        // write to allocated unused data
+        else
+        {
+            index = CurrentSwayListTailIndex + id.x;
+        }
+        // initialize the data
+        SwayObjectParameters[index] = SwayObjectParametersToAdd[id.x];
+        SwayVectors[index] = 0;
+        SwayVelocities[index] = 0;   
+    }
+}
+
+
+[numthreads(8,1,1)]
+void RemoveInstance (uint3 id : SV_DispatchThreadID)
+{
+    // remove mechanics is moved to add instance compute 
+}

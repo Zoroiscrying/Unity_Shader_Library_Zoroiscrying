@@ -14,7 +14,7 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-RWTexture3D<half4> _WindTexturePrevFrame;
+// RWTexture3D<half4> _WindTexturePrevFrame;
 
 RWTexture3D<int> _WindTexturePrevX;
 RWTexture3D<int> _WindTexturePrevY;
@@ -24,6 +24,7 @@ RWTexture3D<int> _WindTexturePrevPrevX;
 RWTexture3D<int> _WindTexturePrevPrevY;
 RWTexture3D<int> _WindTexturePrevPrevZ;
 
+float _WindVoxelSize;
 uint3 _WindVolumeTextureSize;
 // float _DeltaTime;
 float _WindAttenuationStrength;
@@ -34,7 +35,7 @@ float _WindAdvectionIntensity;
 
 void AtomicAdd(uniform RWTexture3D<int> rwTex, uniform uint3 rwTexSize, in uint3 coord, in float value)
 {
-    if (all(coord < rwTexSize))
+    if (all(coord < rwTexSize && coord >= 0))
     {
         InterlockedAdd(rwTex[coord], (int)(value * FXDPT_SIZE));
     }
@@ -42,7 +43,7 @@ void AtomicAdd(uniform RWTexture3D<int> rwTex, uniform uint3 rwTexSize, in uint3
 
 void AtomicAdd(uniform RWTexture3D<int> rwTex, uniform uint3 rwTexSize, in uint3 coord, in int value)
 {
-    if (all(coord < rwTexSize))
+    if (all(coord < rwTexSize && coord >= 0))
     {
         InterlockedAdd(rwTex[coord], value);
     }
@@ -65,50 +66,54 @@ void CalculateWeights(inout float weights[8], float3 weight_floor, float3 weight
     weights[7] = weight_ceil.x * weight_ceil.y * weight_ceil.z;
 }
 
+// Advect this voxel's velocity to eight nearby voxels
 void TrilinearForwardAdvection(uniform RWTexture3D<int> rwTex, uniform uint3 rwTexSize,
     uint3 coord_floor, uint3 coord_ceil, float weights[8], float one_axis_velocity)
 {
+    one_axis_velocity *= MULTIPLIER;
+    
     // floor, floor, floor
     AtomicAdd(rwTex, rwTexSize,
         uint3(coord_floor.x, coord_floor.y, coord_floor.z),
-        weights[0] * one_axis_velocity * MULTIPLIER);
+        weights[0] * one_axis_velocity);
     
     // floor, floor, ceil
     AtomicAdd(rwTex, rwTexSize,
         uint3(coord_floor.x, coord_floor.y, coord_ceil.z),
-        weights[1] * one_axis_velocity * MULTIPLIER);
+        weights[1] * one_axis_velocity);
     
     // floor, ceil, floor,
     AtomicAdd(rwTex, rwTexSize,
         uint3(coord_floor.x, coord_ceil.y, coord_floor.z),
-        weights[2] * one_axis_velocity * MULTIPLIER);
+        weights[2] * one_axis_velocity);
     
     // floor, ceil, ceil
     AtomicAdd(rwTex, rwTexSize,
         uint3(coord_floor.x, coord_ceil.y, coord_ceil.z),
-        weights[3] * one_axis_velocity * MULTIPLIER);
+        weights[3] * one_axis_velocity);
     
     // ceil, floor, floor
     AtomicAdd(rwTex, rwTexSize,
         uint3(coord_ceil.x, coord_floor.y, coord_floor.z),
-        weights[4] * one_axis_velocity * MULTIPLIER);
+        weights[4] * one_axis_velocity);
     
     // ceil, floor, ceil
     AtomicAdd(rwTex, rwTexSize,
         uint3(coord_ceil.x, coord_floor.y, coord_ceil.z),
-        weights[5] * one_axis_velocity * MULTIPLIER);
+        weights[5] * one_axis_velocity);
     
     // ceil, ceil, floor
     AtomicAdd(rwTex, rwTexSize,
         uint3(coord_ceil.x, coord_ceil.y, coord_floor.z),
-        weights[6] * one_axis_velocity * MULTIPLIER);
+        weights[6] * one_axis_velocity);
     
     // ceil, ceil, ceil
     AtomicAdd(rwTex, rwTexSize,
         uint3(coord_ceil.x, coord_ceil.y, coord_ceil.z),
-        weights[7] * one_axis_velocity * MULTIPLIER);
+        weights[7] * one_axis_velocity);
 }
 
+// Advect eight nearby voxels' velocities to this voxel
 void TrilinearBackwardAdvection(uniform RWTexture3D<int> rwTex, uniform uint3 rwTexSize, uniform RWTexture3D<int> velocity_tex,
     uint3 target_id, uint3 coord_floor, uint3 coord_ceil, float weights[8])
 {
@@ -161,26 +166,30 @@ void ForwardAdvectionXYZ (uint3 id : SV_DispatchThreadID)
     const float velocity_y = IntToFloat(_WindTexturePrevY[id]);
     const float velocity_z = IntToFloat(_WindTexturePrevZ[id]);
     const float a = unity_DeltaTime[0] * _WindAdvectionIntensity;
-    
-    float3 target_id = (float3)id + float3(velocity_x, velocity_y, velocity_z) * a;
-    
-    target_id.x = clamp(target_id.x, 0, _WindVolumeTextureSize.x - 1);
-    target_id.y = clamp(target_id.y, 0, _WindVolumeTextureSize.y - 1);
-    target_id.z = clamp(target_id.z, 0, _WindVolumeTextureSize.z - 1);
-    
+
+    // similar to trilinear filtering sampling
+    float3 target_id = (float3)id + float3(velocity_x, velocity_y, velocity_z) * a / _WindVoxelSize;
+
+    // we skip the clamp here to make sure target index go beyond the boundary.
+    // target_id.x = clamp(target_id.x, 0, _WindVolumeTextureSize.x - 1);
+    // target_id.y = clamp(target_id.y, 0, _WindVolumeTextureSize.y - 1);
+    // target_id.z = clamp(target_id.z, 0, _WindVolumeTextureSize.z - 1);
+
+    // we account for cases where the target index is beyond texture coord in the Atomic Add function
+    // where coordinates above the boundary will not receive results.
     const uint floor_id_x = uint(target_id.x);
     const uint ceil_id_x = floor_id_x + 1;
-    const float ceil_weight_x = (target_id.x - floor_id_x) / (ceil_id_x - floor_id_x);
+    const float ceil_weight_x = (target_id.x - floor_id_x); // in this case, interval is 1, so division by (x1-x0) is saved
     const float floor_weight_x = 1 - ceil_weight_x;
     
     const uint floor_id_y = uint(target_id.y);
     const uint ceil_id_y = floor_id_y + 1;
-    const float ceil_weight_y = (target_id.y - floor_id_y) / (ceil_id_y - floor_id_y);
+    const float ceil_weight_y = (target_id.y - floor_id_y);
     const float floor_weight_y = 1 - ceil_weight_y;
     
     const uint floor_id_z = uint(target_id.z);
     const uint ceil_id_z = floor_id_z + 1;
-    const float ceil_weight_z = (target_id.z - floor_id_z) / (ceil_id_z - floor_id_z);
+    const float ceil_weight_z = (target_id.z - floor_id_z);
     const float floor_weight_z = 1 - ceil_weight_z;
 
     float weights[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -211,12 +220,14 @@ void BackwardAdvectionXYZ (uint3 id : SV_DispatchThreadID)
     const float velocity_y = IntToFloat(_WindTexturePrevY[id]);
     const float velocity_z = IntToFloat(_WindTexturePrevZ[id]);
     const float a = unity_DeltaTime[0] * _WindAdvectionIntensity;
-    
-    float3 target_id = (float3)id - float3(velocity_x, velocity_y, velocity_z) * a;
-    
-    target_id.x = clamp(target_id.x, 0, _WindVolumeTextureSize.x - 1);
-    target_id.y = clamp(target_id.y, 0, _WindVolumeTextureSize.y - 1);
-    target_id.z = clamp(target_id.z, 0, _WindVolumeTextureSize.z - 1);
+
+    // similar to trilinear filtering sampling
+    float3 target_id = (float3)id - float3(velocity_x, velocity_y, velocity_z) * a / _WindVoxelSize;
+
+    // we skip the clamp here to make sure target index go beyond the boundary.
+    // target_id.x = clamp(target_id.x, 0, _WindVolumeTextureSize.x - 1);
+    // target_id.y = clamp(target_id.y, 0, _WindVolumeTextureSize.y - 1);
+    // target_id.z = clamp(target_id.z, 0, _WindVolumeTextureSize.z - 1);
     
     const uint floor_id_x = uint(target_id.x);
     const uint ceil_id_x = floor_id_x + 1;
@@ -251,6 +262,8 @@ void BackwardAdvectionXYZ (uint3 id : SV_DispatchThreadID)
     uint3(ceil_id_x, ceil_id_y, ceil_id_z), weights);
 }
 
+// --- The functions below are not used. //
+
 [numthreads(8,4,8)]
 void ForwardAdvectionX (uint3 id : SV_DispatchThreadID)
 {
@@ -265,7 +278,7 @@ void ForwardAdvectionX (uint3 id : SV_DispatchThreadID)
     {
         // calculate the floor and ceil of the coordinate
         float floor_id_x = floor(target_id_x);
-        float ceil_id_x = ceil(target_id_x) + 0.001f; // prevent divide by zero occasion
+        float ceil_id_x = ceil(target_id_x) + REAL_MIN; // prevent divide by zero occasion
         const float floor_weight = (target_id_x - floor_id_x) / (ceil_id_x - floor_id_x);
         // X Velocity Advection
         AtomicAdd(_WindTexturePrevPrevX, _WindVolumeTextureSize, uint3(floor_id_x, id.y, id.z), floor_weight * velocity_x * MULTIPLIER);
@@ -293,7 +306,7 @@ void ForwardAdvectionY (uint3 id : SV_DispatchThreadID)
     {
         // calculate the floor and ceil of the coordinate
         float floor_id_y = floor(target_id_y);
-        float ceil_id_y = ceil(target_id_y) + 0.001f; // prevent divide by zero occasion
+        float ceil_id_y = ceil(target_id_y) + REAL_MIN; // prevent divide by zero occasion
         const float floor_weight = (target_id_y - floor_id_y) / (ceil_id_y - floor_id_y);
         // X Velocity Advection
         AtomicAdd(_WindTexturePrevPrevX, _WindVolumeTextureSize, uint3(id.x, floor_id_y, id.z), floor_weight * velocity_x * MULTIPLIER);
@@ -320,7 +333,7 @@ void ForwardAdvectionZ (uint3 id : SV_DispatchThreadID)
     {
         // calculate the floor and ceil of the coordinate
         float floor_id_z = floor(target_id_z);
-        float ceil_id_z = ceil(target_id_z) + 0.001f; // prevent divide by zero occasion
+        float ceil_id_z = ceil(target_id_z) + REAL_MIN; // prevent divide by zero occasion
         const float floor_weight = (target_id_z - floor_id_z) / (ceil_id_z - floor_id_z);
         // X Velocity Advection
         AtomicAdd(_WindTexturePrevPrevX, _WindVolumeTextureSize, uint3(id.x, id.y, floor_id_z), floor_weight * velocity_x * MULTIPLIER);
@@ -345,7 +358,7 @@ void BackwardAdvectionX (uint3 id : SV_DispatchThreadID)
     {
         // calculate the floor and ceil of the coordinate
         float floor_id_x = floor(target_id_x);
-        float ceil_id_x = ceil(target_id_x) + 0.001f; // prevent divide by zero occasion
+        float ceil_id_x = ceil(target_id_x) + REAL_MIN; // prevent divide by zero occasion
         const float floor_weight = (target_id_x - floor_id_x) / (ceil_id_x - floor_id_x);
         
         const float velocity_x_ceil = IntToFloat(_WindTexturePrevX[uint3(ceil_id_x, id.y, id.z)]);
@@ -377,7 +390,7 @@ void BackwardAdvectionY (uint3 id : SV_DispatchThreadID)
     {
         // calculate the floor and ceil of the coordinate
         float floor_id_y = floor(target_id_y);
-        float ceil_id_y = ceil(target_id_y) + 0.001f; // prevent divide by zero occasion
+        float ceil_id_y = ceil(target_id_y) + REAL_MIN; // prevent divide by zero occasion
         const float floor_weight = (target_id_y - floor_id_y) / (ceil_id_y - floor_id_y);
         
         const float velocity_x_ceil = IntToFloat(_WindTexturePrevX[uint3(id.x, ceil_id_y, id.z)]);
@@ -409,7 +422,7 @@ void BackwardAdvectionZ (uint3 id : SV_DispatchThreadID)
     {
         // calculate the floor and ceil of the coordinate
         float floor_id_z = floor(target_id_z);
-        float ceil_id_z = ceil(target_id_z) + 0.001f; // prevent divide by zero occasion
+        float ceil_id_z = ceil(target_id_z) + REAL_MIN; // prevent divide by zero occasion
         const float floor_weight = (target_id_z - floor_id_z) / (ceil_id_z - floor_id_z);
 
         const float velocity_x_ceil = IntToFloat(_WindTexturePrevX[uint3(id.x, id.y, ceil_id_z)]);

@@ -155,20 +155,18 @@ float3 NoiseWind(float3 positionWS)
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     // Convert the data into half4
-    float3 windVelocities = float3(
-        (float)_WindTextureSourceX[id] / FXDPT_SIZE,
-        (float)_WindTextureSourceY[id] / FXDPT_SIZE,
-        (float)_WindTextureSourceZ[id] / FXDPT_SIZE);
-
+    float3 windVelocities = float3(_WindTextureSourceX[id], _WindTextureSourceY[id], _WindTextureSourceZ[id]) / FXDPT_SIZE;
+    // windVelocities = float3(0, 0, 50.0f);
+    
     // Add in global wind here
     // Add in ambient wind
     windVelocities += AmbientWind();
 
-    const float3 positionWS = _WindVolumeCenterPosition + (float3(id) - float3(15.5, 7.5, 15.5)) * _WindVolumeVoxelSize;
+    const float3 positionWS = _WindVolumeCenterPosition + (float3(id) - float3(15, 7, 15)) * _WindVolumeVoxelSize;
     windVelocities += NoiseWind(positionWS);
     //windVelocities += float3(0.01f, 0.00f, 0.00f);
     
-    float mag = length(windVelocities);
+    float mag = max(length(windVelocities), REAL_MIN);
     float3 windDir = windVelocities / mag;
     
     _WindTextureTarget[id] = half4(windDir, mag);
