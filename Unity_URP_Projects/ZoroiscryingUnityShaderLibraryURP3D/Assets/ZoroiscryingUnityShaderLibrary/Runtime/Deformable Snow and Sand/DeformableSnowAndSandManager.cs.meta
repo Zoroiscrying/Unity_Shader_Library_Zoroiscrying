@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 59988771a5284464bb6144a157b7ad90
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - csSnowDepressionRegisterShader: {fileID: 7200000, guid: ac39559f1fd68a145a1bf926bd959ea4, type: 3}
+  - csSnowFillShader: {fileID: 7200000, guid: 3929a111be9d6c04bb82593da19d25e5, type: 3}
+  - centerTransform: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

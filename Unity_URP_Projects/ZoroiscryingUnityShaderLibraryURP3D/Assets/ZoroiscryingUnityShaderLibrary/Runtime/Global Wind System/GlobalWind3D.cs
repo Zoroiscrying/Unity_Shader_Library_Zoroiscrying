@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using JetBrains.Annotations;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.VisualScripting;
@@ -12,6 +13,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
+using UnityEngine.VFX;
 using ZoroiscryingUnityShaderLibrary.Runtime.DynamicVegetation;
 using ZoroiscryingUnityShaderLibrary.Runtime.Global_Wind_System;
 using ZoroiscryingUnityShaderLibrary.Shaders.ComputeShaderRelated;
@@ -118,6 +120,15 @@ public class GlobalWind3D : MonoBehaviour
     // private RenderTexture _windIntensityDirectionVolume2; // possibly for wind advocate
     private static readonly Vector3Int VolumeResolution = new Vector3Int(32, 16, 32);
     private Vector3 VolumeResolutionMinusOne => VolumeResolution - new Vector3Int(1, 1, 1);
+
+    // currently, the unity don't support Global VFX Graph Parameters as well as custom hlsl support, so this part is 
+    // quite tricky to make; 
+    // Viable solutions maybe register VFX Graph with the global wind manager at runtime when VFX Graph is created.
+    // Therefore, this part is not being developed anymore due to the bad support of VFX Graph customization.
+    // Examples of custom nodes is available at Github though, which might be examined later (don't know when).
+    // https://github.com/peeweek/net.peeweek.vfxgraph-extras
+    [Header("VFX Graph Support")] [SerializeField]
+    private VisualEffect vfxSubGraphSampleGlobalWind;
     
     // Profiling
     public static readonly ProfilingSampler WindInheritanceProfilingSampler = new ProfilingSampler($"{nameof(GlobalWind3D)}.{nameof(WindInjection)}");
@@ -234,6 +245,12 @@ public class GlobalWind3D : MonoBehaviour
 	    ValidateInput();
 	    CheckIfNeedToInitResources();
 	    SetupWindConstantUniforms();
+	    
+	    // vfx graph support
+	    if (vfxSubGraphSampleGlobalWind)
+	    {
+		    vfxSubGraphSampleGlobalWind.SetTexture("GlobalWindTex3D", _windVolumeHalf16);   
+	    }
 
 	    // command buffer for wind diffusion
 	    RenderPipelineManager.beginCameraRendering += HandleBeginCameraRendering;
@@ -280,7 +297,7 @@ public class GlobalWind3D : MonoBehaviour
 	    // Inheritance -> Injection -> Diffusion -> Advection -> Export
 	    var cmd = CommandBufferPool.Get();
 	    cmd.Clear();
-	    cmd.SetExecutionFlags(CommandBufferExecutionFlags.AsyncCompute);
+	    // cmd.SetExecutionFlags(CommandBufferExecutionFlags.AsyncCompute);
 	    
 	    // Wind Uniforms (variant) used across different operations
 	    SetUpWindVariantUniforms(cmd);
@@ -321,9 +338,9 @@ public class GlobalWind3D : MonoBehaviour
 		    WindExport(cmd);
 	    }
 
-	    cmd.SetGlobalTexture("_GlobalWindVolume3D", _windVolumeHalf16);
+	    cmd.SetGlobalTexture("_GlobalWindVolume3D",  _windVolumeHalf16);
 	    // Async will make the 3D Texture hard to sync with other sampling methods (e.g., sample in VFX Graph)
-	    context.ExecuteCommandBufferAsync(cmd, ComputeQueueType.Default);
+	    context.ExecuteCommandBuffer(cmd);
 	    //context.ExecuteCommandBuffer(cmd);
 	    cmd.Release();
 	}
@@ -433,7 +450,10 @@ public class GlobalWind3D : MonoBehaviour
 	    }
 	    // _DeltaWindCenterPosition and _WindVolumeSizeXYZ
 	    cmd.SetComputeVectorParam(csWindInheritance, "_DeltaWindCenterPosition", _deltaVolumePositionThisFrame);
-	    Debug.Log(_deltaVolumePositionThisFrame);
+	    if (_deltaVolumePositionThisFrame.sqrMagnitude > 0.1f)
+	    {
+		    Debug.Log(_deltaVolumePositionThisFrame);   
+	    }
 	    Vector3 windVolumeSizeXYZ = VolumeResolution;
 	    windVolumeSizeXYZ *= sizePerVoxel;
 	    cmd.SetComputeVectorParam(csWindInheritance, "_WindVolumeSizeXYZ", windVolumeSizeXYZ);
@@ -851,6 +871,7 @@ public class GlobalWind3D : MonoBehaviour
     	    ValidateInput();
     	    
     	    // cmd.SetComputeFloatParam(csWindAdvection, "_DeltaTime", Time.deltaTime);
+            cmd.SetComputeVectorParam(csWindInheritance, "_DeltaWindCenterPosition", _deltaVolumePositionThisFrame);
             cmd.SetComputeIntParams(csWindAdvection, "_WindVolumeTextureSize", new int[]{32, 16, 32});
             cmd.SetComputeFloatParam(csWindAdvection, "_WindVoxelSize", sizePerVoxel);
     	    cmd.SetComputeFloatParam(csWindAdvection, "_WindAttenuationStrength", windAdvectionAttenuationStrength);
@@ -1225,10 +1246,24 @@ public class GlobalWind3D : MonoBehaviour
 	    }
 
 	    volume = new RenderTexture(VolumeResolution.x, VolumeResolution.y, 0,
-		    RenderTextureFormat.ARGBHalf);
-	    volume.volumeDepth = VolumeResolution.z;
-	    volume.dimension = TextureDimension.Tex3D;
-	    volume.enableRandomWrite = true;
+		    RenderTextureFormat.ARGBHalf)
+	    {
+		    volumeDepth = VolumeResolution.z,
+		    dimension = TextureDimension.Tex3D,
+		    enableRandomWrite = true
+	    };
+	    volume.Create();
+    }
+    
+    private void ForceInitHalfVolume([NotNull] ref RenderTexture volume)
+    {
+	    volume = new RenderTexture(VolumeResolution.x, VolumeResolution.y, 0,
+		    RenderTextureFormat.ARGBHalf)
+	    {
+		    volumeDepth = VolumeResolution.z,
+		    dimension = TextureDimension.Tex3D,
+		    enableRandomWrite = true
+	    };
 	    volume.Create();
     }
 

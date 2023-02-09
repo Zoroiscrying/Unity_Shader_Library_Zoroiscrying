@@ -24,6 +24,8 @@ RWTexture3D<int> _WindTexturePrevPrevX;
 RWTexture3D<int> _WindTexturePrevPrevY;
 RWTexture3D<int> _WindTexturePrevPrevZ;
 
+float3 _DeltaWindCenterPosition;
+
 float _WindVoxelSize;
 uint3 _WindVolumeTextureSize;
 // float _DeltaTime;
@@ -168,8 +170,9 @@ void ForwardAdvectionXYZ (uint3 id : SV_DispatchThreadID)
     const float a = unity_DeltaTime[0] * _WindAdvectionIntensity;
 
     // similar to trilinear filtering sampling
-    float3 target_id = (float3)id + float3(velocity_x, velocity_y, velocity_z) * a / _WindVoxelSize;
-
+    float3 target_id = (float3)id + (float3(velocity_x, velocity_y, velocity_z) * a + _DeltaWindCenterPosition / unity_DeltaTime[0]) / _WindVoxelSize;
+    //target_id = (float3)id + (_DeltaWindCenterPosition) / _WindVoxelSize;
+    
     // we skip the clamp here to make sure target index go beyond the boundary.
     // target_id.x = clamp(target_id.x, 0, _WindVolumeTextureSize.x - 1);
     // target_id.y = clamp(target_id.y, 0, _WindVolumeTextureSize.y - 1);
@@ -222,8 +225,9 @@ void BackwardAdvectionXYZ (uint3 id : SV_DispatchThreadID)
     const float a = unity_DeltaTime[0] * _WindAdvectionIntensity;
 
     // similar to trilinear filtering sampling
-    float3 target_id = (float3)id - float3(velocity_x, velocity_y, velocity_z) * a / _WindVoxelSize;
-
+    float3 target_id = (float3)id - (float3(velocity_x, velocity_y, velocity_z) * a + _DeltaWindCenterPosition / unity_DeltaTime[0]) / _WindVoxelSize;
+    //target_id = (float3)id - (_DeltaWindCenterPosition) / _WindVoxelSize;
+    
     // we skip the clamp here to make sure target index go beyond the boundary.
     // target_id.x = clamp(target_id.x, 0, _WindVolumeTextureSize.x - 1);
     // target_id.y = clamp(target_id.y, 0, _WindVolumeTextureSize.y - 1);

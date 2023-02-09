@@ -1,0 +1,176 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel RegisterFootprint
+#pragma kernel ErasePreviousFrameData
+#pragma kernel ClearOutData
+
+#include "DeformableSnowAndSandShaderUtility.hlsl"
+
+
+// 1<<16; 1<<6; 1<<0
+// Use Step to clamp
+// 32bits, 16bits for deformation height, 10bits for foot deformation, 6bits for timer.
+// uniform RWTexture2D<uint> SnowDepressionTexture;
+
+// the center height of the depression space
+//float CurrentMinimumHeightWorldSpace;
+//float SnowTextureWorldCenterX;
+//float SnowTextureWorldCenterZ;
+// texture resolution and world space size
+//uint SnowTextureResolution;
+//float SnowTextureSizeWorldSpace;
+
+// uint16 range excluding the leftmost bit: 0, 32767
+// FXDPT_SIZE conversion floating range: 0, 128 in meters, step size: 0.004m = 4 mm
+// #define FXDPT_SIZE (1 << 8)
+
+// depression height takes up 16 bits (uint) range from 0 to 1<<16-1
+// #define DEPRESSION_MAX 0xffff
+// // foot height takes up 10 bits (uint), range from 0 to 1<<10 - 1 (right now we're using all 16 bits)
+// #define FOOT_HEIGHT_MAX 0xffff
+// // timer takes up 6 bits (uint), range from 0 to 1<<6 - 1
+// #define TIMER_MAX (1 << 6) - 1
+
+uint SnowFootprintAmount;
+float FootPrintAffectDistance;
+StructuredBuffer<SnowFootprintData> SnowFootprintBuffer;
+
+// Each foot print gets dispatched with one compute group
+[numthreads(1,1,1)]
+void RegisterFootprint (uint3 id : SV_DispatchThreadID)
+{
+    // make sure ids are in-bound (it will always in-bound if we use 1,1,1 num threads)
+    if (id.x < SnowFootprintAmount)
+    {
+        SnowFootprintData footprint_data = SnowFootprintBuffer[id.x];
+        // SnowFootprintData footprint_data;
+        // footprint_data.PositionWorldSpace = float3(0, 0, 0);
+        // footprint_data.DepressionCoefficient = 1.0f;
+        
+        // end the shader early out if the foot print data point is outside of the current texture's coverage.
+        if (abs(footprint_data.PositionWorldSpace.x - SnowTextureWorldCenterX) > SnowTextureSizeWorldSpace/2.0f ||
+            abs(footprint_data.PositionWorldSpace.z - SnowTextureWorldCenterZ) > SnowTextureSizeWorldSpace/2.0f)
+        {
+            return;
+        }
+
+        // we need to make sure that the min height world space is lower than the min foot height
+        // we do this on the CPU side.
+        const float foot_height_depression_space = footprint_data.PositionWorldSpace.y - CurrentMinimumHeightWorldSpace;
+        // const float2 world_position_modulus = Modulus(footprint_data.PositionWorldSpace.xz, SnowTextureSizeWorldSpace);
+        // const uint2 foot_print_center_id = uint2(world_position_modulus / SnowTextureSizeWorldSpace * SnowTextureResolution); 
+        const int loop_range_id = int(FootPrintAffectDistance / SnowTextureSizeWorldSpace * (float)SnowTextureResolution);
+
+        // how to convert this loop into compute shader threads?
+        // for each foot print, we extract loops into threads (8, 8, 1) or (4, 4, 1) or other, each one is one of the
+        // (16, 16) id range around the foot print, the minimum
+        for (int id_x = -loop_range_id; id_x <= loop_range_id; id_x++)
+        {
+            for (int id_y = -loop_range_id; id_y <= loop_range_id; id_y++)
+            {
+                const float2 cell_world_position_offset = float2(id_x, id_y) / (float)SnowTextureResolution * SnowTextureSizeWorldSpace;
+                const float2 cell_world_position = footprint_data.PositionWorldSpace.xz + cell_world_position_offset;
+                const float2 cell_world_position_modulus = Modulus(cell_world_position, SnowTextureSizeWorldSpace);
+                const uint2 depression_cell_id = clamp(uint2(cell_world_position_modulus / SnowTextureSizeWorldSpace * (float)SnowTextureResolution), uint2(0, 0), uint2(SnowTextureResolution-1, SnowTextureResolution-1));
+
+                // distance calculation (length of world space offset)
+                const float distance_ws = length(cell_world_position_offset);
+                // get depression-deformation height, d^2 * s = deformation 
+                const float deformation_height_depression_space = foot_height_depression_space + distance_ws * distance_ws * footprint_data.DepressionCoefficient;
+                
+                const uint embed_data = EmbedSnowDepressionDataToUInt32(deformation_height_depression_space, foot_height_depression_space, 0.0f);
+
+                // atomic minimum
+                InterlockedMin(SnowDepressionTexture[depression_cell_id], embed_data);
+                
+                // SnowDepressionTexture[depression_cell_id] = embed_data;
+                // if the new deformation differentiate much than the current one, we override it directly rather than using interlock min
+                // if (true)
+                // {
+                // }
+                // else
+                // {
+                // }
+            }
+        }
+    }
+}
+
+// Erase the pixels that represent position farthest away from center position
+// we use id groups that correspond to world space positions (can also only process edge positions, but it's more complicated)
+[numthreads(8,8,1)]
+void ErasePreviousFrameData(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x < SnowTextureResolution && id.y < SnowTextureResolution)
+    {
+        // we need to clear out the edge pixels in order to successfully use Modulus and one Texture for sliding window scheme
+        // be aware that id.xy are not reliable as we used Modulus to first get a Texture space position, then get its id (which may be chaotic)
+        // ver 1. just erase the values
+        const float2 position_world_space_xz = float2(SnowTextureWorldCenterX, SnowTextureWorldCenterZ)
+        - SnowTextureSizeWorldSpace / 2.0f + float2(id.xy) / (float)(SnowTextureResolution) * SnowTextureSizeWorldSpace;
+
+        // 8 pixels along the edge are erased (factored)
+        const float edge_range = SnowTextureSizeWorldSpace / 2.0f - 8.0f / (float)SnowTextureResolution * SnowTextureSizeWorldSpace;
+        // only select pixels that possess far range from the center
+        const float edge_factor = step(edge_range, abs(position_world_space_xz.x - SnowTextureWorldCenterX)) +
+                              step(edge_range, abs(position_world_space_xz.y - SnowTextureWorldCenterZ));
+
+        // ver 2. exponential fall off
+        if (edge_factor > 0)
+        {
+            const float2 world_position_modulus = Modulus(position_world_space_xz, SnowTextureSizeWorldSpace);
+            const uint2 farthest_position_id = uint2(world_position_modulus / SnowTextureSizeWorldSpace * (float)SnowTextureResolution); 
+            // why did the paper said we should set this to UINT_32_MAX?
+            SnowDepressionTexture[farthest_position_id] = UINT_MAX;
+        }
+    }
+}
+
+float hash( float n ) { return frac(sin(n)*753.5453123); }
+// parameter noise
+float noise_p(float3 x)
+{
+    float3 p = floor(x);
+    float3 f = frac(x);
+    f = f*f*(3.0-2.0*f);
+	
+    float n = p.x + p.y*157.0 + 113.0*p.z;
+    return lerp(lerp(lerp( hash(n+  0.0), hash(n+  1.0),f.x),
+                   lerp( hash(n+157.0), hash(n+158.0),f.x),f.y),
+               lerp(lerp( hash(n+113.0), hash(n+114.0),f.x),
+                   lerp( hash(n+270.0), hash(n+271.0),f.x),f.y),f.z);
+}
+
+float ScrollNoise(float3 pos, float speed, float scale, float3 dir, float amount, float bias = 0.0, float mult = 1.0)
+{
+    float time = _Time.y * speed;
+    float noiseScale = scale;
+    float3 noiseScroll = dir * time;
+    float3 q = pos - noiseScroll;
+    q *= scale;
+    float f = 0;
+    f = 0.5 * noise_p(q);
+    // scroll the next octave in the opposite direction to get some morphing instead of just scrolling
+    q += noiseScroll * scale;
+    q = q * 2.01;
+    f += 0.25 * noise_p(q);
+
+    f += bias;
+    f *= mult;
+
+    f = max(f, 0.0);
+    return lerp(1.0, f, amount);
+}
+
+// Clear out the data, set to max uint. Max depression height, max foot height, max timer
+// Which would leave the snow intact because of much different from snow vertex height and the foot height
+[numthreads(8,8,1)]
+void ClearOutData(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x < SnowTextureResolution && id.y < SnowTextureResolution)
+    {
+        SnowDepressionTexture[id.xy] = UINT_MAX;
+        // const float foot_position_depression_space = 0.0f - CurrentMinimumHeightWorldSpace;
+        // const float depression_height_depression_space = foot_position_depression_space + ScrollNoise(float3(id.xyx) / 512.0f, 1.0f, 10.0f, float3(1, 0, 1), 2.0f);
+        // SnowDepressionTexture[id.xy] = EmbedSnowDepressionDataToUInt32(depression_height_depression_space, foot_position_depression_space, 0.0f);
+    }
+}

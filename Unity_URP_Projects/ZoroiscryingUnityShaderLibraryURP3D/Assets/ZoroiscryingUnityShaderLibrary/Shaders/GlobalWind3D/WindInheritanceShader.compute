@@ -13,6 +13,13 @@ uniform RWTexture3D<int> _GlobalWindVolume3DXTo;
 uniform RWTexture3D<int> _GlobalWindVolume3DYTo;
 uniform RWTexture3D<int> _GlobalWindVolume3DZTo;
 
+#define FXDPT_SIZE (1 << 16) // negative 16, positive 16 => int32 texture
+
+float IntToFloat(int value)
+{
+    return (float)value / FXDPT_SIZE;
+}
+
 bool OutsideRangeOfZeroOne(float input)
 {
     if (input < 0 || input > 1)
@@ -65,7 +72,7 @@ void TrilinearSampling_ClampZero(
     }
 
     // https://en.wikipedia.org/wiki/Trilinear_interpolation
-    float3 uvw_text_index = uvw_coord * texture_size;
+    float3 uvw_text_index = uvw_coord * texture_size + 1;
     
     const uint floor_id_x = uint(uvw_text_index.x);
     const uint ceil_id_x = floor_id_x + 1;
@@ -101,15 +108,16 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     // if deltaPosition is (1, 1, 1) in world space
     // we need to convert the delta position in WS to UVW space
-    // and let To sample the From
-    
+
     // When center moves (1, 1, 1), the From is not valid anymore,
     // we need to let (x, y, z) of To sample the (x+1, y+1, z+1) of the From
     int r, g, b;
     
     // Todo:: account for wind rotation, truly move the world space into wind space
     // conversion from world space to texture index space
-    const float3 uvw = ((float3)id + _DeltaWindCenterPosition/_WindVoxelSize) / (float3)_WindVolumeTextureSize;
+    // const float3 uvw = ((float3)id + _DeltaWindCenterPosition/_WindVoxelSize) / (float3)_WindVolumeTextureSize;
+    // const float3 uvw = ((float3)id) / (float3)_WindVolumeTextureSize + .1f;
+    const float3 uvw = ((float3)id) / (float3)_WindVolumeTextureSize;
     
     TrilinearSampling_ClampZero(_GlobalWindVolume3DXFrom, _GlobalWindVolume3DYFrom, _GlobalWindVolume3DZFrom,
         uvw, _WindVolumeTextureSize, r, g, b);

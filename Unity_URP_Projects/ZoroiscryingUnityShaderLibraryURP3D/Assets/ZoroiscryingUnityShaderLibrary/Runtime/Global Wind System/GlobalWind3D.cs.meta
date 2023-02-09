@@ -13,6 +13,7 @@ MonoImporter:
   - csIntToHalfExport: {fileID: 7200000, guid: 98d569125d13402593fa303fc1b60b84, type: 3}
   - windCenterTransform: {instanceID: 0}
   - textureNoise2D: {fileID: 2800000, guid: 86bebe6ef974d77418f51afe2ff3e498, type: 3}
+  - windVolumeHalf16File: {fileID: 8400000, guid: 2026a0645a62d7e47a41788dfc220845, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

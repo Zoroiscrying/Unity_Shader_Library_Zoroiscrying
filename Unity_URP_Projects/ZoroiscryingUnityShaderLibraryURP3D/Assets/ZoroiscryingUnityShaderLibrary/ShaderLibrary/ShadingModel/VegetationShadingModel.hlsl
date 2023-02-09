@@ -21,26 +21,30 @@ void ApplyVertexDisplacementForVegetation_NonPersistentData(
     const float3 positionWS_ObjectCenter = TransformObjectToWorld(float3(0, 0, 0));
     const float3 positionWS_preModify = TransformObjectToWorld(positionOS);
     const float vertexLengthWS = length(positionWS_preModify - positionWS_ObjectCenter);
-    
-    float3 positionDeltaWS = 0;
-    // leaf movement - parameterized, controlled purely by time, pure local noise
-    float3 lowDensityNoise = spherical_noise33(
-        positionWS_preModify.xyz * displacementData._ParameterMovementDensity * rcp(max(.1f, displacementData._ParameterMovementStiffness))
-        + _Time.y * float3(1.6f, .2f, 1.6f));
-    float3 highDensityNoise = spherical_noise33(
-        positionWS_preModify.xyz * displacementData._ParameterMovementDensity * rcp(max(.1f, displacementData._ParameterMovementStiffness)) * 4.0f
-        + _Time.y * float3(6.4f, .8f, 6.4f));
 
+    float3 positionDeltaWS = 0;
+    
     // directional wind contribution
     const float oneDimensionalCoord = (positionWS_preModify.x + positionWS_preModify.y + positionWS_preModify.z)
     * displacementData._ParameterMovementDensity;
     const float windSpeed = length(displacementData._WindVelocityVector);
-    const float3 windDirection = displacementData._WindVelocityVector * rcp(windSpeed);
-    const float3 windContributionLowFreq = windDirection * 16.0f * windSpeed;
-    const float3 windContributionHighFreq = windDirection * (sin(oneDimensionalCoord + _Time.y * 16.0f) + 1.2) * 4.0f * windSpeed;
+    const float3 windDirection = displacementData._WindVelocityVector * rcp(max(windSpeed, REAL_MIN));
+    const float windSpeedLog = log2(windSpeed / 4 + 1); // this is to ensure speed of 0 won't produce negative movement
+    const float3 windContributionLowFreq = windDirection * 16.0f * windSpeedLog;
+    const float3 windContributionHighFreq = windDirection * (sin(oneDimensionalCoord + _Time.y * 16.0f) + 1.2) * 4.0f * windSpeedLog;
+    
+    // leaf movement - parameterized, controlled purely by time, pure local noise
+    const float lowDensityNoiseStrength = saturate(smoothstep(0.5f, 5.0f, windSpeed));
+    float3 lowDensityNoise = spherical_noise33(
+        positionWS_preModify.xyz * displacementData._ParameterMovementDensity * rcp(max(.1f, displacementData._ParameterMovementStiffness))
+        + _Time.y * float3(1.6f, .2f, 1.6f)) * lowDensityNoiseStrength;
+    const float highDensityNoiseStrength = saturate(smoothstep(5.0f, 25.0f, windSpeed));
+    float3 highDensityNoise = spherical_noise33(
+        positionWS_preModify.xyz * displacementData._ParameterMovementDensity * rcp(max(.1f, displacementData._ParameterMovementStiffness)) * 8.0f
+        + _Time.y * float3(6.4f, .8f, 6.4f)) * highDensityNoiseStrength;
     
     // additive wind displacements
-    positionDeltaWS += lerp(lowDensityNoise, highDensityNoise, 0.2f);
+    positionDeltaWS += lerp(lowDensityNoise, highDensityNoise, 0.5f);
     positionDeltaWS += lerp(windContributionLowFreq, windContributionHighFreq, 0.2f);
     
     // branch movement - stateful, controlled by compute parameters

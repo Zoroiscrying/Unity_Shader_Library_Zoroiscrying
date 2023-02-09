@@ -139,7 +139,7 @@ int _sphereWindCount;
 
 float hash( float n ) { return frac(sin(n)*753.5453123); }
 // parameter noise
-float noisep(float3 x)
+float noise_p(float3 x)
 {
     float3 p = floor(x);
     float3 f = frac(x);
@@ -160,11 +160,11 @@ float ScrollNoise(float3 pos, float speed, float scale, float3 dir, float amount
     float3 q = pos - noiseScroll;
     q *= scale;
     float f = 0;
-    f = 0.5 * noisep(q);
+    f = 0.5 * noise_p(q);
     // scroll the next octave in the opposite direction to get some morphing instead of just scrolling
     q += noiseScroll * scale;
     q = q * 2.01;
-    f += 0.25 * noisep(q);
+    f += 0.25 * noise_p(q);
 
     f += bias;
     f *= mult;
@@ -183,18 +183,18 @@ float3 GlobalWindNoise3D(float3 pos, float scrollSpeed, float3 frequency, float3
     
     // three noise values calculation, 2 octaves, 0.75 - 1.333333
     float f1 = 0;
-    f1 = 0.5 * noisep(newPosition);
+    f1 = 0.5 * noise_p(newPosition);
     float f2 = 0;
-    f2 = 0.5 * noisep(newPosition + noiseOffset);
+    f2 = 0.5 * noise_p(newPosition + noiseOffset);
     float f3 = 0;
-    f3 = 0.5 * noisep(newPosition - noiseOffset);
+    f3 = 0.5 * noise_p(newPosition - noiseOffset);
     
     newPosition += noiseScroll * frequency;
     newPosition *= 2.01;
     noiseOffset *= 2.01;
-    f1 += 0.25 * noisep(newPosition);
-    f2 += 0.25 * noisep(newPosition + noiseOffset);
-    f3 += 0.25 * noisep(newPosition - noiseOffset);
+    f1 += 0.25 * noise_p(newPosition);
+    f2 += 0.25 * noise_p(newPosition + noiseOffset);
+    f3 += 0.25 * noise_p(newPosition - noiseOffset);
 
     float3 wind = (float3(f1, f2, f3) - 0.5) * 2;
     wind *= 1.333333 * intensity;

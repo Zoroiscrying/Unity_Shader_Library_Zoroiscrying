@@ -2,6 +2,7 @@
 #define CUSTOM_VEGETATION_INPUT_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#include "../GlobalWind3D/SampleGlobalWind3D.hlsl"
 #include "Assets/ZoroiscryingUnityShaderLibrary/ShaderLibrary/ShadingModel/VegetationShadingData.hlsl"
 
 struct Attributes
@@ -57,10 +58,7 @@ half _ParameterMovementBend;
 half _ParameterMovementStretch;
 half _ParameterMovementStiffness;
 // - sway params
-// todo:: SwayInstanceBufferCount
 uint _SwayInstanceIndex;
-half _SwayMovementSpring;
-half _SwayMovementDamping;
 // - tree params
 half _TreeMovementBend;
 half _TreeMovementScale;
@@ -190,7 +188,7 @@ void InitializeDisplacementData(Attributes input, out Vegetation_DisplacementDat
     // tree params
 
     // wind params
-    displacementData._WindVelocityVector = float3(1, 0, 0);
+    displacementData._WindVelocityVector = SampleWindDirectionVelocityVertex(TransformObjectToWorld(input.positionOS));
 }
 
 

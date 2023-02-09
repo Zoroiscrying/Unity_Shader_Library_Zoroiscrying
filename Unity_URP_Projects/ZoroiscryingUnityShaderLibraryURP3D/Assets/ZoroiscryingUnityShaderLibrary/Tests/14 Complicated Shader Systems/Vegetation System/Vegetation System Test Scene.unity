@@ -414,7 +414,7 @@ MonoBehaviour:
   cylinderWindLocalExtends: {x: 1, y: 1}
   windShapeVelocityInfluence: 1
   fixedWindIsLocal: 1
-  fixedWindVelocityLocal: {x: 0, y: 0, z: 5}
+  fixedWindVelocityLocal: {x: 0, y: 0, z: 0.2}
   fixedWindVelocityGlobal: {x: 0, y: 0, z: 5}
   centerPointLocal: {x: 0, y: 0, z: 0}
   pointBasedMaxWindSpeed: 10
@@ -481,7 +481,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 353826643}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.41, y: 2.09, z: -4.19}
+  m_LocalPosition: {x: -6.16, y: 2.09, z: -4.19}
   m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1777,7 +1777,7 @@ MonoBehaviour:
   sizePerVoxel: 1
   diffusionEnabled: 1
   diffusionIntensity: 1
-  windDiffusionIteration: 5
+  windDiffusionIteration: 7
   advectionEnabled: 1
   windAdvectionAttenuationStrength: 0.98
   windAdvectionIntensity: 1
@@ -1790,6 +1790,7 @@ MonoBehaviour:
   textureNoise2D: {fileID: 2800000, guid: cf26ee101389f1943a7d239e367f312c, type: 3}
   noisePositionFrequency: {x: 0.05, y: 0.05, z: 0.05}
   noisePositionOffset: {x: 0, y: 0, z: 0}
+  vfxSubGraphSampleGlobalWind: {fileID: 0}
 --- !u!4 &2009238387
 Transform:
   m_ObjectHideFlags: 0

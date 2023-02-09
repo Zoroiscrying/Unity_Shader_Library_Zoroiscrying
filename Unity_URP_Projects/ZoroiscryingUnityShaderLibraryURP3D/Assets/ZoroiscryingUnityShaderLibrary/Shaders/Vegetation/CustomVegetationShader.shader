@@ -58,8 +58,6 @@ Shader "Custom/Vegetation/DefaultVegetation"
         // this should be at the cpu script side
         [Header(Sway Params)]
         _SwayInstanceIndex("Sway Instance Index", int) = 0
-        _SwayMovementSpring("Sway Movement Spring Strength", Float) = 1.0
-        _SwayMovementDamping("Sway Movement Damping", Float) = 0.5
         
         // - Tree Movement Parameters
         [Header(Tree Params)]
