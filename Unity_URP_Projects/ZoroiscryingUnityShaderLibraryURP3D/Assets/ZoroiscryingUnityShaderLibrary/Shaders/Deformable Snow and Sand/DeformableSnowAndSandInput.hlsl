@@ -17,6 +17,15 @@
 #define REQUIRES_WORLD_SPACE_TANGENT_INTERPOLATOR
 #endif
 
+struct ControlPoint
+{
+    float4 positionOS : INTERNALTESSPOS;
+    float3 positionWS : TEXCOORD0;
+    float4 tangentOS : TEXCOORD1;
+    float3 normalOS : NORMAL;
+    float2 uv : TEXCOORD2;
+};
+
 struct Attributes
 {
     float4 positionOS   : POSITION;

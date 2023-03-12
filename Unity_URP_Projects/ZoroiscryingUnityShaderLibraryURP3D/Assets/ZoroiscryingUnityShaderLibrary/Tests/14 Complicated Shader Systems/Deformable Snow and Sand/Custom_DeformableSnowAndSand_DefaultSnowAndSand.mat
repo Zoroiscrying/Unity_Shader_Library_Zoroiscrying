@@ -83,14 +83,17 @@ Material:
     - _EnvironmentReflections: 1
     - _Metallic: 0
     - _OcclusionStrength: 1
-    - _Parallax: 0.05
+    - _Parallax: 0.01
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _Smoothness: 0.5
+    - _Smoothness: 0.602
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _Surface: 0
+    - _TessellationFactor: 6
+    - _TessellationMaxDistance: 16
+    - _TessellationMinDistance: 2
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}

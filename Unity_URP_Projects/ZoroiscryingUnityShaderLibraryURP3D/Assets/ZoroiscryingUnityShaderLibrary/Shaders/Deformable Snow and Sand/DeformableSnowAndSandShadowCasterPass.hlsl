@@ -32,6 +32,19 @@ float4 GetShadowPositionHClip(Attributes input)
     return positionCS;
 }
 
+ControlPoint SnowAndSandPassVertexForTessellation(Attributes input)
+{
+    ControlPoint output;
+
+    output.normalOS = input.normalOS;
+    output.positionOS = input.positionOS;
+    output.tangentOS = input.tangentOS;
+    output.uv = input.uv;
+    output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
+    
+    return output;    
+}
+
 Varyings ShadowPassVertex(Attributes input)
 {
     Varyings output;
@@ -56,6 +69,37 @@ half4 ShadowPassFragment(Varyings input) : SV_TARGET
 {
     Alpha(SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, _BaseColor, _Cutoff);
     return 0;
+}
+
+Varyings DepthOnlyVertex(Attributes input)
+{
+    Varyings output;
+    UNITY_SETUP_INSTANCE_ID(input);
+    output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+    const float3 positionWS_original = TransformObjectToWorld(input.positionOS.xyz);
+    float depression_height_ws;
+    float foot_height_ws;
+    SampleSnowAndSandTexture(positionWS_original, depression_height_ws, foot_height_ws);
+    
+    float3 position_ws_modified = positionWS_original;
+    ProcessSnowAndSandDisplacement(position_ws_modified, depression_height_ws, foot_height_ws);
+    
+    const float3 position_os_modified = TransformWorldToObject(position_ws_modified);
+    input.positionOS.xyz = position_os_modified;
+    
+    output.positionCS = TransformObjectToHClip(position_os_modified);
+    return output;
+}
+
+half4 DepthOnlyFragment(Varyings input) : SV_TARGET
+{
+    Alpha(SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, _BaseColor, _Cutoff);
+    return 0;
+}
+
+Varyings VertexToFragment(Attributes input)
+{
+    return ShadowPassVertex(input);    
 }
 
 #endif

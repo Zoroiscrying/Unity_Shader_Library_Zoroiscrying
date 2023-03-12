@@ -33,8 +33,8 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.Deformable_Snow_and_Sand
         private ComputeBuffer _dummyComputeBuffer;
 
         [SerializeField] private Transform centerTransform;
-        private const float SNOW_HEIGHT_RANGE = 128.0f;
-        private float _currentLowestHeight = -64.0f;
+        private const float SNOW_HEIGHT_RANGE = 16.0f;
+        private float _currentLowestHeight = -8.0f;
         private float _deltaLowestHeight = 0.0f;
         private Vector3 _centerPosition = Vector3.zero;
         private Vector3 _centerPositionLastFrame = Vector3.zero;
@@ -243,7 +243,7 @@ namespace ZoroiscryingUnityShaderLibrary.Runtime.Deformable_Snow_and_Sand
             }
 
             cmd.SetComputeIntParam(csSnowDepressionRegisterShader, "SnowFootprintAmount", snowFootPrintCount);
-            cmd.SetComputeFloatParam(csSnowDepressionRegisterShader, "FootPrintAffectDistance", 0.75f);
+            cmd.SetComputeFloatParam(csSnowDepressionRegisterShader, "FootPrintAffectDistance", 1.0f);
             cmd.SetComputeBufferParam(csSnowDepressionRegisterShader, kernel, "SnowFootprintBuffer",
                 snowFootPrintCount > 0 ? _footPrintDataBuffer : _dummyComputeBuffer);
             

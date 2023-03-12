@@ -66,6 +66,21 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData inputData
 ///////////////////////////////////////////////////////////////////////////////
 //                  Vertex and Fragment functions                            //
 ///////////////////////////////////////////////////////////////////////////////
+
+ControlPoint SnowAndSandPassVertexForTessellation(Attributes input)
+{
+    ControlPoint output;
+
+    output.normalOS = input.normalOS;
+    output.positionOS = input.positionOS;
+    output.tangentOS = input.tangentOS;
+    output.uv = input.uv;
+    output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
+    
+    return output;    
+}
+
+
 Varyings LitPassVertex(Attributes input)
 {
     Varyings output = (Varyings)0;
@@ -79,12 +94,31 @@ Varyings LitPassVertex(Attributes input)
     const float3 positionWS_original = TransformObjectToWorld(input.positionOS.xyz);
     float depression_height_ws;
     float foot_height_ws;
-    SampleSnowAndSandTexture(positionWS_original, depression_height_ws, foot_height_ws);
+
+    float3 bitangent = cross(input.normalOS, input.tangentOS.xyz);
     
+    // original modified position
     float3 position_ws_modified = positionWS_original;
+    SampleSnowAndSandTexture(position_ws_modified, depression_height_ws, foot_height_ws);
     ProcessSnowAndSandDisplacement(position_ws_modified, depression_height_ws, foot_height_ws);
-    
+    // modified position - tangent dir
+    float3 position_ws_tangent_dir_modified = positionWS_original + TransformObjectToWorldDir(input.tangentOS.xyz) * 0.1f;
+    SampleSnowAndSandTexture(position_ws_tangent_dir_modified, depression_height_ws, foot_height_ws);
+    ProcessSnowAndSandDisplacement(position_ws_tangent_dir_modified, depression_height_ws, foot_height_ws);
+    // modified position - bi-tangent dir
+    float3 position_ws_biTangent_dir_modified = positionWS_original + TransformObjectToWorldDir(bitangent) * 0.1f;
+    SampleSnowAndSandTexture(position_ws_biTangent_dir_modified, depression_height_ws, foot_height_ws);
+    ProcessSnowAndSandDisplacement(position_ws_biTangent_dir_modified, depression_height_ws, foot_height_ws);
+
+    // 2. Recalculate vertex normal based on near-position tangent and bi-tangent
     const float3 position_os_modified = TransformWorldToObject(position_ws_modified);
+    const float3 positionOS_TangentDir = TransformWorldToObject(position_ws_tangent_dir_modified);
+    const float3 positionOS_BiTangentDir = TransformWorldToObject(position_ws_biTangent_dir_modified);
+    
+    RecalculateVertexNormal_CrossBased(position_os_modified,
+    positionOS_TangentDir, positionOS_BiTangentDir, input.normalOS);
+    input.tangentOS.xyz = positionOS_TangentDir - position_os_modified;
+    
     VertexPositionInputs vertexInput = GetVertexPositionInputs(position_os_modified);
 
     // 2. do normal vertex shading stuffs, we will use ddx ddy to calculate pixel normals afterwards
@@ -139,6 +173,11 @@ Varyings LitPassVertex(Attributes input)
     return output;
 }
 
+Varyings VertexToFragment(Attributes input)
+{
+    return LitPassVertex(input);    
+}
+
 // Used in Standard (Physically Based) shader
 half4 LitPassFragment(Varyings input) : SV_Target
 {
@@ -158,11 +197,14 @@ half4 LitPassFragment(Varyings input) : SV_Target
     SurfaceData surfaceData;
     InitializeStandardLitSurfaceData(input.uv, surfaceData);
 
-    surfaceData.albedo = lerp(surfaceData.albedo * 0.2f, surfaceData.albedo * 1.0f, saturate(input.positionWS.y / 2.0f));
+    // surfaceData.albedo = lerp(surfaceData.albedo * 0.2f, surfaceData.albedo * 1.0f, saturate(input.positionWS.y / 2.0f));
 
     InputData inputData;
     // recalculate normal ws here
-    // input.normalWS = 
+    // const float3 ddxPos = ddx(input.positionWS);
+    // const float3 ddyPos = ddy(input.positionWS) * _ProjectionParams.x;
+    // input.normalWS = normalize(cross(ddxPos, ddyPos));
+    
     InitializeInputData(input, surfaceData.normalTS, inputData);
     SETUP_DEBUG_TEXTURE_DATA(inputData, input.uv, _BaseMap);
 

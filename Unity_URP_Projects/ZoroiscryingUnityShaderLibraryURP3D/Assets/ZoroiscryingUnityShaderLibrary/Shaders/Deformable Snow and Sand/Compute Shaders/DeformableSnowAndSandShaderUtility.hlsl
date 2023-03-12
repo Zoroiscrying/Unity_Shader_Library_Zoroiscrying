@@ -9,11 +9,6 @@ struct SnowFootprintData
     float DepressionCoefficient;
 };
 
-// 1<<16; 1<<6; 1<<0
-// Use Step to clamp
-// 32bits, 16bits for deformation height, 10bits for foot deformation, 6bits for timer.
-uniform RWTexture2D<uint> SnowDepressionTexture;
-
 // the center height of the depression space
 float CurrentMinimumHeightWorldSpace;
 float SnowTextureWorldCenterX;
@@ -23,9 +18,9 @@ uint SnowTextureResolution;
 // Snow system coverage world space size
 float SnowTextureSizeWorldSpace;
 
-// uint16 range excluding the leftmost bit: 0, 32767
-// FXDPT_SIZE conversion floating range: 0, 128 in meters, step size: 0.004m = 4 mm
-#define FXDPT_SIZE (1 << 8)
+// uint16 range : 0, 65536
+// FXDPT_SIZE conversion floating range: 0, 16 in meters, step size: 0.00025m.
+#define FXDPT_SIZE (1 << 12)
 
 // depression height takes up 16 bits (uint) range from 0 to 1<<16-1
 #define DEPRESSION_MAX 0xffff
@@ -34,8 +29,7 @@ float SnowTextureSizeWorldSpace;
 // timer takes up 6 bits (uint), range from 0 to 1<<6 - 1
 #define TIMER_MAX (1 << 6) - 1
 
-// turn floating point to int32, because int32 have one leftmost sign bit, and a variant sign bit
-// would ruin the atomic minimum operation, we need to not use that bit.
+// turn floating point to uint32
 uint EmbedSnowDepressionDataToUInt32(float depression_height_depression_space, float foot_height_depression_space, float timer)
 {
     // int32, 32 bits in all; 
@@ -45,7 +39,7 @@ uint EmbedSnowDepressionDataToUInt32(float depression_height_depression_space, f
     return foot_height_data | depression_height_data;
 }
 
-void ExtractDepressionDataFromInt32(uint data, out float depression_height_ws, out float foot_height_ws, out float timer)
+void ExtractDepressionDataFromUInt32(uint data, out float depression_height_ws, out float foot_height_ws, out float timer)
 {
     depression_height_ws = float(data >> 16) / (float)FXDPT_SIZE + CurrentMinimumHeightWorldSpace;
     // 00000000000000001111111111111111 | 00000000000000001111111111000000

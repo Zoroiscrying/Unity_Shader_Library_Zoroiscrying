@@ -3,25 +3,10 @@
 
 #include "DeformableSnowAndSandShaderUtility.hlsl"
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
-//uniform RWTexture2D<uint> SnowDepressionTexture;
-//// the center height of the depression space
-//float CurrentMinimumHeightWorldSpace;
-//float SnowTextureWorldCenterX;
-//float SnowTextureWorldCenterZ;
-//// texture resolution and world space size
-//uint SnowTextureResolution;
-//float SnowTextureSizeWorldSpace;
-
-// #define FXDPT_SIZE (1 << 8)
-// 
-// // depression height takes up 16 bits (uint), excluding the left most one, range from 0 to 1<<15-1
-// #define DEPRESSION_MAX 0xffff
-// // foot height takes up 10 bits (uint), range from 0 to 1<<10 - 1 (right now we're using all 16 bits)
-// #define FOOT_HEIGHT_MAX 0xffff
-// // timer takes up 6 bits (uint), range from 0 to 1<<6 - 1
-// #define TIMER_MAX (1 << 6) - 1
+// 1<<16; 1<<6; 1<<0
+// Use Step to clamp
+// 32bits, 16bits for deformation height, 10bits for foot deformation, 6bits for timer.
+uniform RWTexture2D<uint> SnowDepressionTexture;
 
 float hash( float n ) { return frac(sin(n)*753.5453123); }
 // parameter noise
@@ -69,9 +54,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float foot_height_ws;
     float timer;
     
-    ExtractDepressionDataFromInt32(SnowDepressionTexture[id.xy], depression_height_ws, foot_height_ws, timer);
-    depression_height_ws += unity_DeltaTime.z * 0.25f;
-    foot_height_ws += unity_DeltaTime.z * 0.25f;
+    ExtractDepressionDataFromUInt32(SnowDepressionTexture[id.xy], depression_height_ws, foot_height_ws, timer);
+    depression_height_ws += unity_DeltaTime.z * 0.04f;
+    foot_height_ws += unity_DeltaTime.z * 0.04f;
     
     SnowDepressionTexture[id.xy] = EmbedSnowDepressionDataToUInt32(
         depression_height_ws - CurrentMinimumHeightWorldSpace,

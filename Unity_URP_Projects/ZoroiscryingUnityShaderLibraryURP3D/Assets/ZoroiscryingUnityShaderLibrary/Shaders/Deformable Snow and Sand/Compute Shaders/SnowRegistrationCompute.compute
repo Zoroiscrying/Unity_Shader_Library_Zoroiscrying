@@ -5,11 +5,10 @@
 
 #include "DeformableSnowAndSandShaderUtility.hlsl"
 
-
 // 1<<16; 1<<6; 1<<0
 // Use Step to clamp
 // 32bits, 16bits for deformation height, 10bits for foot deformation, 6bits for timer.
-// uniform RWTexture2D<uint> SnowDepressionTexture;
+uniform RWTexture2D<uint> SnowDepressionTexture;
 
 // the center height of the depression space
 //float CurrentMinimumHeightWorldSpace;
@@ -76,20 +75,24 @@ void RegisterFootprint (uint3 id : SV_DispatchThreadID)
                 const float distance_ws = length(cell_world_position_offset);
                 // get depression-deformation height, d^2 * s = deformation 
                 const float deformation_height_depression_space = foot_height_depression_space + distance_ws * distance_ws * footprint_data.DepressionCoefficient;
-                
                 const uint embed_data = EmbedSnowDepressionDataToUInt32(deformation_height_depression_space, foot_height_depression_space, 0.0f);
 
-                // atomic minimum
+                float current_depression_height_ws;
+                float current_footprint_height_Ws;
+                float current_timer_ws;
+                
+                ExtractDepressionDataFromUInt32(SnowDepressionTexture[depression_cell_id],
+                    current_depression_height_ws,
+                    current_footprint_height_Ws,
+                    current_timer_ws);
+                
                 InterlockedMin(SnowDepressionTexture[depression_cell_id], embed_data);
                 
-                // SnowDepressionTexture[depression_cell_id] = embed_data;
-                // if the new deformation differentiate much than the current one, we override it directly rather than using interlock min
-                // if (true)
-                // {
-                // }
-                // else
-                // {
-                // }
+                // find current deformation data, if it is much higher than the current one, we override rather than interlock min.
+                if (abs(foot_height_depression_space + CurrentMinimumHeightWorldSpace - current_footprint_height_Ws) > 2.0f)
+                {
+                    SnowDepressionTexture[depression_cell_id] = embed_data;
+                }
             }
         }
     }
