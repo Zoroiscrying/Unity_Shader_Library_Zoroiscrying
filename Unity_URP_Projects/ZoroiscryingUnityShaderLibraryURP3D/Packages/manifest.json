@@ -20,6 +20,7 @@
     "com.unity.visualeffectgraph": "12.1.6",
     "com.unity.visualscripting": "1.7.6",
     "com.unity.xr.legacyinputhelpers": "2.1.9",
+    "com.zoroiscrying.scriptable-object-core": "https://github.com/Zoroiscrying/com.zoroiscrying.ScriptableObjectCore.git",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",

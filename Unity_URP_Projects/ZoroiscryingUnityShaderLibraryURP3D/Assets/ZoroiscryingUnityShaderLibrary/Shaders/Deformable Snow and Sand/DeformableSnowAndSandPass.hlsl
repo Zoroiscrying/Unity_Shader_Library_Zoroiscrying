@@ -92,8 +92,9 @@ Varyings LitPassVertex(Attributes input)
     // 1. first calculate the displacement
     // - displacement here
     const float3 positionWS_original = TransformObjectToWorld(input.positionOS.xyz);
-    float depression_height_ws;
-    float foot_height_ws;
+    float depression_height_ws = 0.0f;
+    float foot_height_ws = 0.0f;
+    const float sample_dist = 0.1f;
 
     float3 bitangent = cross(input.normalOS, input.tangentOS.xyz);
     
@@ -102,22 +103,38 @@ Varyings LitPassVertex(Attributes input)
     SampleSnowAndSandTexture(position_ws_modified, depression_height_ws, foot_height_ws);
     ProcessSnowAndSandDisplacement(position_ws_modified, depression_height_ws, foot_height_ws);
     // modified position - tangent dir
-    float3 position_ws_tangent_dir_modified = positionWS_original + TransformObjectToWorldDir(input.tangentOS.xyz) * 0.1f;
+    float3 position_ws_tangent_dir_modified = positionWS_original + TransformObjectToWorldDir(input.tangentOS.xyz) * sample_dist;
     SampleSnowAndSandTexture(position_ws_tangent_dir_modified, depression_height_ws, foot_height_ws);
     ProcessSnowAndSandDisplacement(position_ws_tangent_dir_modified, depression_height_ws, foot_height_ws);
     // modified position - bi-tangent dir
-    float3 position_ws_biTangent_dir_modified = positionWS_original + TransformObjectToWorldDir(bitangent) * 0.1f;
+    float3 position_ws_biTangent_dir_modified = positionWS_original + TransformObjectToWorldDir(bitangent) * sample_dist;
     SampleSnowAndSandTexture(position_ws_biTangent_dir_modified, depression_height_ws, foot_height_ws);
     ProcessSnowAndSandDisplacement(position_ws_biTangent_dir_modified, depression_height_ws, foot_height_ws);
-
+    // -- to improve the accuracy, we use even 2 more samples in the neg-tangent and neg-bi-tangent directions
+    float3 position_ws_neg_tangent_dir_modified = positionWS_original + TransformObjectToWorldDir(input.tangentOS.xyz) * -sample_dist;
+    SampleSnowAndSandTexture(position_ws_neg_tangent_dir_modified, depression_height_ws, foot_height_ws);
+    ProcessSnowAndSandDisplacement(position_ws_neg_tangent_dir_modified, depression_height_ws, foot_height_ws);
+    // modified position - bi-tangent dir
+    float3 position_ws_neg_biTangent_dir_modified = positionWS_original + TransformObjectToWorldDir(bitangent) * -sample_dist;
+    SampleSnowAndSandTexture(position_ws_neg_biTangent_dir_modified, depression_height_ws, foot_height_ws);
+    ProcessSnowAndSandDisplacement(position_ws_neg_biTangent_dir_modified, depression_height_ws, foot_height_ws);
+    
     // 2. Recalculate vertex normal based on near-position tangent and bi-tangent
     const float3 position_os_modified = TransformWorldToObject(position_ws_modified);
-    const float3 positionOS_TangentDir = TransformWorldToObject(position_ws_tangent_dir_modified);
-    const float3 positionOS_BiTangentDir = TransformWorldToObject(position_ws_biTangent_dir_modified);
+    // const float3 positionOS_TangentDir = TransformWorldToObject(position_ws_tangent_dir_modified);
+    // const float3 positionOS_BiTangentDir = TransformWorldToObject(position_ws_biTangent_dir_modified);
+
+    float3 normal_ws_recalculated = 0;
     
-    RecalculateVertexNormal_CrossBased(position_os_modified,
-    positionOS_TangentDir, positionOS_BiTangentDir, input.normalOS);
-    input.tangentOS.xyz = positionOS_TangentDir - position_os_modified;
+    //RecalculateVertexNormal_CrossBased_TwoDirection(position_os_modified,
+    //positionOS_TangentDir, positionOS_BiTangentDir, input.normalOS);
+    RecalculateVertexNormal_CrossBased_FourDirection(position_ws_modified,
+        position_ws_tangent_dir_modified, position_ws_biTangent_dir_modified,
+        position_ws_neg_tangent_dir_modified, position_ws_neg_biTangent_dir_modified,
+        normal_ws_recalculated);
+    input.normalOS = TransformWorldToObjectNormal(normal_ws_recalculated);
+    
+    input.tangentOS.xyz = TransformWorldToObjectDir(position_ws_tangent_dir_modified - position_ws_neg_tangent_dir_modified);
     
     VertexPositionInputs vertexInput = GetVertexPositionInputs(position_os_modified);
 

@@ -55,8 +55,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float timer;
     
     ExtractDepressionDataFromUInt32(SnowDepressionTexture[id.xy], depression_height_ws, foot_height_ws, timer);
-    depression_height_ws += unity_DeltaTime.z * 0.04f;
-    foot_height_ws += unity_DeltaTime.z * 0.04f;
+
+    // we should consider the minimum interval of our texture, being 16bits representing 16 meters, bit interval being 2^4 / 2^16 = 0.00024
+    // considering a delta-time of avg 60fps, which is 1 / 60 = 0.0166666..., we have a min multiplier of 0.00024 / (1/60) = 0.0144.
+    // of course, we can change the delta-time of snow fill to 30fps, 24fps, to have a smaller fill rate in the case of the minimum interval of bit texture
+
+    depression_height_ws += unity_DeltaTime.z * 0.02f;
+    foot_height_ws += unity_DeltaTime.z * 0.02f;
     
     SnowDepressionTexture[id.xy] = EmbedSnowDepressionDataToUInt32(
         depression_height_ws - CurrentMinimumHeightWorldSpace,

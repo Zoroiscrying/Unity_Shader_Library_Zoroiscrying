@@ -12,6 +12,14 @@ void SampleSnowAndSandTexture(float3 positionWS, out float depression_ws, out fl
     // TODO:: Bilinear interpolation of the decompressed values
     // point sampling for now
     const float2 position_world_space_xz = positionWS.xz;
+
+    if (NotInsideTheCurrentSnowTextureCoverage(positionWS.xz))
+    {
+        depression_ws = 0.0f;
+        footHeight_ws = CurrentMinimumHeightWorldSpace + 16.0f;
+        return;
+    }
+    
     const float2 world_position_modulus = Modulus(position_world_space_xz, SnowTextureSizeWorldSpace);
     const uint2 position_id = uint2(world_position_modulus / SnowTextureSizeWorldSpace * SnowTextureResolution);
     float timer;
@@ -42,10 +50,20 @@ void RecalculateVertexNormal_DerivativeBased_PixelShaderOnly(float3 positionOS, 
     normalOS = normalize(cross(ddxPos, ddyPos));
 }
 
-void RecalculateVertexNormal_CrossBased(float3 positionOS, float3 positionOS_Tangent_Direction, float3 positionOS_BiTangent_Direction, inout float3 normalOS)
+void RecalculateVertexNormal_CrossBased_TwoDirection(float3 positionOS, float3 positionOS_Tangent_Direction, float3 positionOS_BiTangent_Direction, inout float3 normalOS)
 {
     float3 tangent = SafeNormalize(positionOS_Tangent_Direction - positionOS);
     float3 biTangent = SafeNormalize(positionOS_BiTangent_Direction - positionOS);
+    normalOS = normalize(cross(tangent, biTangent));
+}
+
+void RecalculateVertexNormal_CrossBased_FourDirection(float3 positionOS,
+    float3 positionOS_Tangent_Direction, float3 positionOS_BiTangent_Direction,
+    float3 positionOS_Neg_Tangent_Direction, float3 positionOS_Net_BiTangent_Direction,
+    inout float3 normalOS)
+{
+    float3 tangent = SafeNormalize(positionOS_Tangent_Direction - positionOS_Neg_Tangent_Direction);
+    float3 biTangent = SafeNormalize(positionOS_BiTangent_Direction - positionOS_Net_BiTangent_Direction);
     normalOS = normalize(cross(tangent, biTangent));
 }
 
@@ -57,7 +75,7 @@ void ProcessSnowAndSandDisplacement(inout float3 positionWS, float depression_he
     if ((delta) < 2.0f && delta > 0.0f)
     {
         // world space noise value
-        const float noise = (fbm_snoise_4step_12(positionWS.xz * 2.0f) - 0.5f) * 2.0f * 0.2f;
+        const float noise = (fbm_snoise_4step_12(positionWS.xz * 0.75f) - 0.5f) * 2.0f * 0.4f;
         
         // depression depth is the foot depth of this pixel
         const float depression_depth = positionWS.y - footprint_height_ws; // make sure depression_depth is greater than 0

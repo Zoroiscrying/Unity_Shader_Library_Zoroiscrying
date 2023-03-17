@@ -55,4 +55,9 @@ float2 Modulus(float2 world_position_xz, float2 texture_size_world_space)
     return world_position_xz - (texture_size_world_space * floor(world_position_xz / texture_size_world_space));
 }
 
+bool NotInsideTheCurrentSnowTextureCoverage(float2 position_world_xz)
+{
+    return any(abs(position_world_xz - float2(SnowTextureWorldCenterX, SnowTextureWorldCenterZ)) > SnowTextureSizeWorldSpace / 2.0f);
+}
+
 #endif

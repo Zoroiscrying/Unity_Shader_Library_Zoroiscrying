@@ -285,6 +285,13 @@
       },
       "url": "https://packages.unity.cn"
     },
+    "com.zoroiscrying.scriptable-object-core": {
+      "version": "https://github.com/Zoroiscrying/com.zoroiscrying.ScriptableObjectCore.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "81fd4741f7d38f210196f23c7214578e608d0690"
+    },
     "com.unity.modules.ai": {
       "version": "1.0.0",
       "depth": 0,

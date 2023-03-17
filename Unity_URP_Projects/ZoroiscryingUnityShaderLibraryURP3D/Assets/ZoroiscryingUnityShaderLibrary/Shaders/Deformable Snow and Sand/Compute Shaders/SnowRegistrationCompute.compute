@@ -10,25 +10,6 @@
 // 32bits, 16bits for deformation height, 10bits for foot deformation, 6bits for timer.
 uniform RWTexture2D<uint> SnowDepressionTexture;
 
-// the center height of the depression space
-//float CurrentMinimumHeightWorldSpace;
-//float SnowTextureWorldCenterX;
-//float SnowTextureWorldCenterZ;
-// texture resolution and world space size
-//uint SnowTextureResolution;
-//float SnowTextureSizeWorldSpace;
-
-// uint16 range excluding the leftmost bit: 0, 32767
-// FXDPT_SIZE conversion floating range: 0, 128 in meters, step size: 0.004m = 4 mm
-// #define FXDPT_SIZE (1 << 8)
-
-// depression height takes up 16 bits (uint) range from 0 to 1<<16-1
-// #define DEPRESSION_MAX 0xffff
-// // foot height takes up 10 bits (uint), range from 0 to 1<<10 - 1 (right now we're using all 16 bits)
-// #define FOOT_HEIGHT_MAX 0xffff
-// // timer takes up 6 bits (uint), range from 0 to 1<<6 - 1
-// #define TIMER_MAX (1 << 6) - 1
-
 uint SnowFootprintAmount;
 float FootPrintAffectDistance;
 StructuredBuffer<SnowFootprintData> SnowFootprintBuffer;
