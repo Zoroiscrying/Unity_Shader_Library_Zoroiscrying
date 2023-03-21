@@ -53,7 +53,7 @@ Varyings ShadowPassVertex(Attributes input)
     const float3 positionWS_original = TransformObjectToWorld(input.positionOS.xyz);
     float depression_height_ws;
     float foot_height_ws;
-    SampleSnowAndSandTexture(positionWS_original, depression_height_ws, foot_height_ws);
+    SampleSnowAndSandTexture_float(positionWS_original, depression_height_ws, foot_height_ws);
     
     float3 position_ws_modified = positionWS_original;
     ProcessSnowAndSandDisplacement(position_ws_modified, depression_height_ws, foot_height_ws);
@@ -79,7 +79,7 @@ Varyings DepthOnlyVertex(Attributes input)
     const float3 positionWS_original = TransformObjectToWorld(input.positionOS.xyz);
     float depression_height_ws;
     float foot_height_ws;
-    SampleSnowAndSandTexture(positionWS_original, depression_height_ws, foot_height_ws);
+    SampleSnowAndSandTexture_float(positionWS_original, depression_height_ws, foot_height_ws);
     
     float3 position_ws_modified = positionWS_original;
     ProcessSnowAndSandDisplacement(position_ws_modified, depression_height_ws, foot_height_ws);

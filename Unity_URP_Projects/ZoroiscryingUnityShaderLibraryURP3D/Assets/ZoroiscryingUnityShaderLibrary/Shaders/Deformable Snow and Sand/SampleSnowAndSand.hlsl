@@ -1,16 +1,20 @@
 ﻿#ifndef SAMPLE_SNOW_AND_SAND_INCLUDED
 #define SAMPLE_SNOW_AND_SAND_INCLUDED
 
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/core.hlsl"
+
 #include "Compute Shaders/DeformableSnowAndSandShaderUtility.hlsl"
 #include "Assets/ZoroiscryingUnityShaderLibrary/ShaderLibrary/FractalBrownianMotion.hlsl"
 
 uniform Texture2D<uint> SnowDepressionTexture;
 
-void SampleSnowAndSandTexture(float3 positionWS, out float depression_ws, out float footHeight_ws)
+void SampleSnowAndSandTexture_float(float3 positionWS, out float depression_ws, out float footHeight_ws)
 {
-    // TODO:: Bilinear interpolation of the decompressed values
-    // point sampling for now
+    #if SHADERGRAPH_PREVIEW
+    depression_ws = 0.0f;
+    footHeight_ws = 0.0f;
+    #else
+
+    // TODO:: Bilinear interpolation of the decompressed values, point sampling for now
     const float2 position_world_space_xz = positionWS.xz;
 
     if (NotInsideTheCurrentSnowTextureCoverage(positionWS.xz))
@@ -31,6 +35,8 @@ void SampleSnowAndSandTexture(float3 positionWS, out float depression_ws, out fl
     // {
     //     depression = 0.0f;
     // }
+    
+    #endif
 }
 
 void SampleSnowAndSandTexture_Raw(float3 positionWS, out uint RawData)
@@ -67,11 +73,18 @@ void RecalculateVertexNormal_CrossBased_FourDirection(float3 positionOS,
     normalOS = normalize(cross(tangent, biTangent));
 }
 
-void ProcessSnowAndSandDisplacement(inout float3 positionWS, float depression_height_ws, float footprint_height_ws)
+void GetSnowAndSandWorldPositionY_float(float3 positionWS, float depression_height_ws, float footprint_height_ws, out float world_height, out float is_valid)
 {
+    #if SHADERGRAPH_PREVIEW
+    world_height = 0.0f;
+    is_valid = 0.0f;
+    #else
     // valid foot position, displacement here
     // we only account situations when foot is below the snow, and it's not too deep below the snow
     const float delta = positionWS.y - footprint_height_ws;
+    world_height = 0.0f;
+    is_valid = 0.0f;
+    
     if ((delta) < 2.0f && delta > 0.0f)
     {
         // world space noise value
@@ -96,9 +109,23 @@ void ProcessSnowAndSandDisplacement(inout float3 positionWS, float depression_he
         const float center_to_elevation_start = saturate(deformation_distance / depression_distance);
         const float elevation_start_to_end = saturate(ratio);
         
-        positionWS.y = footprint_height_ws + lerp(deformation_height, elevation + depression_depth, center_to_elevation_start);
+        world_height = footprint_height_ws + lerp(deformation_height, elevation + depression_depth, center_to_elevation_start);
+        is_valid = 1.0f;
         // positionWS.y += lerp(-deformation_height, elevation, center_to_elevation_start);
         // positionWS.y = lerp(depression_height_ws, positionWS.y + elevation, center_to_elevation_start);
+    }
+    #endif
+}
+
+void ProcessSnowAndSandDisplacement(inout float3 positionWS, float depression_height_ws, float footprint_height_ws)
+{
+    float world_height;
+    float is_valid;
+    GetSnowAndSandWorldPositionY_float(positionWS, depression_height_ws, footprint_height_ws, world_height, is_valid );
+
+    if (is_valid)
+    {
+        positionWS.y = world_height;
     }
 }
 

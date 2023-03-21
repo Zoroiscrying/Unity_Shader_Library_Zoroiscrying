@@ -1,7 +1,9 @@
 ﻿#ifndef DEFORMABLE_SNOW_AND_SAND_SHADER_UTILITY_INCLUDED
 #define DEFORMABLE_SNOW_AND_SAND_SHADER_UTILITY_INCLUDED
 
+#if !SHADERGRAPH_PREVIEW
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#endif
 
 struct SnowFootprintData
 {

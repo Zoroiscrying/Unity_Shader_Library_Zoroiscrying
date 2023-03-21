@@ -100,23 +100,23 @@ Varyings LitPassVertex(Attributes input)
     
     // original modified position
     float3 position_ws_modified = positionWS_original;
-    SampleSnowAndSandTexture(position_ws_modified, depression_height_ws, foot_height_ws);
+    SampleSnowAndSandTexture_float(position_ws_modified, depression_height_ws, foot_height_ws);
     ProcessSnowAndSandDisplacement(position_ws_modified, depression_height_ws, foot_height_ws);
     // modified position - tangent dir
     float3 position_ws_tangent_dir_modified = positionWS_original + TransformObjectToWorldDir(input.tangentOS.xyz) * sample_dist;
-    SampleSnowAndSandTexture(position_ws_tangent_dir_modified, depression_height_ws, foot_height_ws);
+    SampleSnowAndSandTexture_float(position_ws_tangent_dir_modified, depression_height_ws, foot_height_ws);
     ProcessSnowAndSandDisplacement(position_ws_tangent_dir_modified, depression_height_ws, foot_height_ws);
     // modified position - bi-tangent dir
     float3 position_ws_biTangent_dir_modified = positionWS_original + TransformObjectToWorldDir(bitangent) * sample_dist;
-    SampleSnowAndSandTexture(position_ws_biTangent_dir_modified, depression_height_ws, foot_height_ws);
+    SampleSnowAndSandTexture_float(position_ws_biTangent_dir_modified, depression_height_ws, foot_height_ws);
     ProcessSnowAndSandDisplacement(position_ws_biTangent_dir_modified, depression_height_ws, foot_height_ws);
     // -- to improve the accuracy, we use even 2 more samples in the neg-tangent and neg-bi-tangent directions
     float3 position_ws_neg_tangent_dir_modified = positionWS_original + TransformObjectToWorldDir(input.tangentOS.xyz) * -sample_dist;
-    SampleSnowAndSandTexture(position_ws_neg_tangent_dir_modified, depression_height_ws, foot_height_ws);
+    SampleSnowAndSandTexture_float(position_ws_neg_tangent_dir_modified, depression_height_ws, foot_height_ws);
     ProcessSnowAndSandDisplacement(position_ws_neg_tangent_dir_modified, depression_height_ws, foot_height_ws);
     // modified position - bi-tangent dir
     float3 position_ws_neg_biTangent_dir_modified = positionWS_original + TransformObjectToWorldDir(bitangent) * -sample_dist;
-    SampleSnowAndSandTexture(position_ws_neg_biTangent_dir_modified, depression_height_ws, foot_height_ws);
+    SampleSnowAndSandTexture_float(position_ws_neg_biTangent_dir_modified, depression_height_ws, foot_height_ws);
     ProcessSnowAndSandDisplacement(position_ws_neg_biTangent_dir_modified, depression_height_ws, foot_height_ws);
     
     // 2. Recalculate vertex normal based on near-position tangent and bi-tangent

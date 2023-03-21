@@ -105,7 +105,7 @@ Shader "Custom/DeformableSnowAndSand/DefaultSnowAndSand"
 
             Blend One Zero
             ZWrite On
-            Cull OFF
+            Cull BACK
 
             HLSLPROGRAM
             #pragma exclude_renderers gles gles3 glcore
@@ -180,7 +180,7 @@ Shader "Custom/DeformableSnowAndSand/DefaultSnowAndSand"
              ZWrite On
              ZTest LEqual
              ColorMask 0
-             Cull OFF
+             Cull BACK
  
              HLSLPROGRAM
              #pragma exclude_renderers gles gles3 glcore
@@ -221,13 +221,15 @@ Shader "Custom/DeformableSnowAndSand/DefaultSnowAndSand"
 
             ZWrite On
             ColorMask 0
-            Cull OFF
+            Cull BACK
 
             HLSLPROGRAM
             #pragma exclude_renderers gles gles3 glcore
             #pragma target 4.5
-
-            #pragma vertex DepthOnlyVertex
+            
+            #pragma vertex SnowAndSandPassVertexForTessellation
+            #pragma hull hull
+            #pragma domain domain
             #pragma fragment DepthOnlyFragment
 
             // -------------------------------------
@@ -246,38 +248,40 @@ Shader "Custom/DeformableSnowAndSand/DefaultSnowAndSand"
         }
 
         // This pass is used when drawing to a _CameraNormalsTexture texture
-        // Pass
-        // {
-        //     Name "DepthNormals"
-        //     Tags{"LightMode" = "DepthNormals"}
-// 
-        //     ZWrite On
-        //     Cull BACK
-// 
-        //     HLSLPROGRAM
-        //     #pragma exclude_renderers gles gles3 glcore
-        //     #pragma target 4.5
-// 
-        //     #pragma vertex DepthNormalsVertex
-        //     #pragma fragment DepthNormalsFragment
-// 
-        //     // -------------------------------------
-        //     // Material Keywords
-        //     #pragma shader_feature_local _NORMALMAP
-        //     #pragma shader_feature_local _PARALLAXMAP
-        //     #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
-        //     #pragma shader_feature_local_fragment _ALPHATEST_ON
-        //     #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-// 
-        //     //--------------------------------------
-        //     // GPU Instancing
-        //     #pragma multi_compile_instancing
-        //     #pragma multi_compile _ DOTS_INSTANCING_ON
-// 
-        //     #include "../../ShaderLibrary/Template/CustomLitInput.hlsl"
-        //     #include "../../ShaderLibrary/Template/CustomLitDepthNormalsPass.hlsl"
-        //     ENDHLSL
-        // }
+        Pass
+        {
+            Name "DepthNormals"
+            Tags{"LightMode" = "DepthNormals"}
+        
+            ZWrite On
+            Cull BACK
+        
+            HLSLPROGRAM
+            #pragma exclude_renderers gles gles3 glcore
+            #pragma target 4.5
+        
+            #pragma vertex SnowAndSandPassVertexForTessellation
+            #pragma hull hull
+            #pragma domain domain
+            #pragma fragment DepthOnlyFragment
+        
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature_local _NORMALMAP
+            #pragma shader_feature_local _PARALLAXMAP
+            #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        
+            //--------------------------------------
+            // GPU Instancing
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+        
+            #include "DeformableSnowAndSandShadowCasterPass.hlsl"
+            #include "../../ShaderLibrary/Tessllation/CustomTessellation.hlsl"
+            ENDHLSL
+        }
     }
 
     FallBack "Hidden/Universal Render Pipeline/FallbackError"
