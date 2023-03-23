@@ -29,22 +29,23 @@ void ApplyVertexDisplacementForVegetation_NonPersistentData(
     * displacementData._ParameterMovementDensity;
     const float windSpeed = length(displacementData._WindVelocityVector);
     const float3 windDirection = displacementData._WindVelocityVector * rcp(max(windSpeed, REAL_MIN));
-    const float windSpeedLog = log2(windSpeed / 4 + 1); // this is to ensure speed of 0 won't produce negative movement
+    // wind speed of 4 = speed log of 1.
+    const float windSpeedLog = log2(windSpeed / 2.0f + 1.0f); // +1.0f is to ensure speed of 0 won't produce negative movement
     const float3 windContributionLowFreq = windDirection * 16.0f * windSpeedLog;
     const float3 windContributionHighFreq = windDirection * (sin(oneDimensionalCoord + _Time.y * 16.0f) + 1.2) * 4.0f * windSpeedLog;
     
     // leaf movement - parameterized, controlled purely by time, pure local noise
-    const float lowDensityNoiseStrength = saturate(smoothstep(0.5f, 5.0f, windSpeed));
+    const float lowDensityNoiseStrength = saturate(smoothstep(0.1f, 0.5f, windSpeed));
     float3 lowDensityNoise = spherical_noise33(
         positionWS_preModify.xyz * displacementData._ParameterMovementDensity * rcp(max(.1f, displacementData._ParameterMovementStiffness))
-        + _Time.y * float3(1.6f, .2f, 1.6f)) * lowDensityNoiseStrength;
-    const float highDensityNoiseStrength = saturate(smoothstep(5.0f, 25.0f, windSpeed));
+        + _Time.y * float3(1.6f, .2f, 1.6f)) * lowDensityNoiseStrength * 1.5f;
+    const float highDensityNoiseStrength = saturate(smoothstep(1.0f, 4.0f, windSpeed));
     float3 highDensityNoise = spherical_noise33(
         positionWS_preModify.xyz * displacementData._ParameterMovementDensity * rcp(max(.1f, displacementData._ParameterMovementStiffness)) * 8.0f
-        + _Time.y * float3(6.4f, .8f, 6.4f)) * highDensityNoiseStrength;
+        + _Time.y * float3(6.4f, .8f, 6.4f)) * highDensityNoiseStrength * 1.25f;
     
     // additive wind displacements
-    positionDeltaWS += lerp(lowDensityNoise, highDensityNoise, 0.5f);
+    positionDeltaWS += lowDensityNoise + highDensityNoise;
     positionDeltaWS += lerp(windContributionLowFreq, windContributionHighFreq, 0.2f);
     
     // branch movement - stateful, controlled by compute parameters

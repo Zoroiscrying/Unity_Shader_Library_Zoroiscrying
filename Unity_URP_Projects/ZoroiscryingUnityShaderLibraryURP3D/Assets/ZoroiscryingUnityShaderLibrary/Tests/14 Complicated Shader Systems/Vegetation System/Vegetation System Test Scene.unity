@@ -354,7 +354,7 @@ MonoBehaviour:
   swayObjectParameter:
     WindStrength: 2
     ObjectMass: 1
-    SpringStrength: 2
+    SpringStrength: 1
     SpringDampen: 0.995
     WorldPosition:
       x: 0
@@ -654,7 +654,7 @@ MonoBehaviour:
   swayObjectParameter:
     WindStrength: 2
     ObjectMass: 1
-    SpringStrength: 2
+    SpringStrength: 1
     SpringDampen: 0.9
     WorldPosition:
       x: 0
@@ -786,7 +786,7 @@ MonoBehaviour:
   swayObjectParameter:
     WindStrength: 1
     ObjectMass: 1
-    SpringStrength: 2
+    SpringStrength: 1
     SpringDampen: 0.9
     WorldPosition:
       x: 0
@@ -965,7 +965,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 4
+  m_Radius: 20
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &1314053774
 MonoBehaviour:
@@ -1015,7 +1015,7 @@ MonoBehaviour:
   swayObjectParameter:
     WindStrength: 1
     ObjectMass: 1
-    SpringStrength: 2
+    SpringStrength: 1
     SpringDampen: 0.9
     WorldPosition:
       x: 0
@@ -1112,7 +1112,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1636903857}
   m_LocalRotation: {x: 0.2522023, y: -0.5434237, z: 0.17543347, w: 0.781222}
-  m_LocalPosition: {x: 5.88, y: 4.72, z: 2.39}
+  m_LocalPosition: {x: 8.091, y: 6.42, z: 1.57}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1575,7 +1575,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1871157063}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.52, y: 1, z: 4.89}
+  m_LocalPosition: {x: 8.91, y: 1, z: 14.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1603,7 +1603,7 @@ MonoBehaviour:
   swayObjectParameter:
     WindStrength: 1
     ObjectMass: 1
-    SpringStrength: 2
+    SpringStrength: 1
     SpringDampen: 0.964
     WorldPosition:
       x: 0
@@ -1782,10 +1782,10 @@ MonoBehaviour:
   windAdvectionAttenuationStrength: 0.98
   windAdvectionIntensity: 1
   propagationIntensityThreshold: 0
-  ambientWind: {x: 0.01, y: 0.01, z: 0.01, w: 0.01}
-  noiseWindIntensity: 0
+  ambientWind: {x: 1, y: 0, z: 0, w: 1}
+  noiseWindIntensity: 4
   noiseWindScrollDirection: {x: 0.57735026, y: 0.57735026, z: 0.57735026}
-  noiseWindScrollSpeed: 1
+  noiseWindScrollSpeed: 2
   textureNoise: 0
   textureNoise2D: {fileID: 2800000, guid: cf26ee101389f1943a7d239e367f312c, type: 3}
   noisePositionFrequency: {x: 0.05, y: 0.05, z: 0.05}

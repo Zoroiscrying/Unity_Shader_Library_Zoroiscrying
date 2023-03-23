@@ -6960,7 +6960,7 @@ MonoBehaviour:
   csSnowDepressionRegisterShader: {fileID: 7200000, guid: ac39559f1fd68a145a1bf926bd959ea4, type: 3}
   csSnowFillShader: {fileID: 7200000, guid: 3929a111be9d6c04bb82593da19d25e5, type: 3}
   snowDepressionUIntR32Rt: {fileID: 0}
-  snowTextureWorldSize: 12.8
+  snowTextureWorldSize: 18
   centerTransform: {fileID: 1420111917}
   depressionCoefficient: 1
   elevationCoefficient: 1
@@ -21181,7 +21181,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 50
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -21206,14 +21206,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1420111913}
-  m_LocalRotation: {x: 0.56258464, y: -0, z: -0, w: 0.82673967}
-  m_LocalPosition: {x: 0, y: 5.06, z: -2.16}
+  m_LocalRotation: {x: 0.2904976, y: -0, z: -0, w: 0.95687574}
+  m_LocalPosition: {x: 0, y: 3.53, z: -3.47}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 68.469, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 33.776, y: 0, z: 0}
 --- !u!1 &1450156322
 GameObject:
   m_ObjectHideFlags: 0

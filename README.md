@@ -244,12 +244,13 @@ Wind Contributor Objects
 Wind Receivers (On Progress)
 
 - Planning
-  - Vegetation - Grass, Vines, Shrubs
+  - Vegetation - Grass, Vines, Shrubs (On-Going)
   - Plant - Tree
   - Cloth - Non-physically-correct
   - Fur / Hair
-
-
+- Future Improvements
+  - Box Contributor seems to have incorrect influence on the wind texture.
+ 
 
 ### 2 Volumetric Lighting & Atmospheric Scattering
 
@@ -287,7 +288,22 @@ Post-Processing Radial-Blur Volumetric Lighting
 
 ### 3 Deformable Snow Ground
 
-- Todo: Tomb Raider: Rise solution
+![DeformableSnow](Resources/DeformableSnowAndSand/DeformableSnow1.png)
+![SnowGrainParticleShaderGraph](Resources/DeformableSnowAndSand/SnowGrainParticle.png)
+
+- Algorithm by: Tomb Raider: Rise (Deferred Snow Deformation in Rise of the Tomb Raider by Michels and Sikachev)
+- Todo
+  - Add support for Vertical-Sliding-Window
+  - Create a more immersive showcase combining the GPU snow particles implementation.
+  - Adoption of various snow deformers (currently only one rounded type)
+- Personal Concern and Possible Improvements
+  - Comparison with Traditional Height-Map-Based Snow Deformation
+    - Pros
+      - Suport for overlapping snow deformation (stepping snow on a bridge will only cause deformation on the bridge but not on the snow below the bridge)
+      - Better snow deformation and edge curve calculation due to deferred snow deformation.
+    - Cons
+      - Extra calculation when pack and extract bit data.
+      - Limited Precision for snow fill process.
 
 ### 4 Dynamic Weather System
 
@@ -308,7 +324,18 @@ Post-Processing Radial-Blur Volumetric Lighting
 **References**
 
 - https://www.youtube.com/watch?v=MKX45_riWQA GDC talk by Sean Feeley
+- Three layers of movement
+  - Wind-Direction Displacement based on Global Wind Texture.
+  - Local Spherical Noise based on Wind intensity.
+  - Stateful sway (displacement data stored in Buffer and processed in Compute Shader to achieve persistent movement)
+    - Basic Process (Every wind receiver can be treated as a single spring with a fixed location in the world, we then can use a spring model to calculate the force, hence acceleration, velocity, and displaced position in the world)
+- Future Improvements
+  - Stateful Tree Implementation.
+  - Integrate Global Wind into refractored Grass Shader.
+  - Improve the movement shader code to match real-world wind speed and object movement.
+  - Improvement of editor scripts (maybe improvement on the GlobalWind3D Manager editor as well, utilizing Unity's uxml system (also serving as a learning process))
 
+<img src="Resources/Global Wind 3D/GlobalWind3D_Vegetation_1.png" alt="GlobalWind3D_Vegetation_1" style="zoom:80%;" />
 
 
 ### 8 Volumetric Cloud System
@@ -321,6 +348,9 @@ Post-Processing Radial-Blur Volumetric Lighting
   - Todo: Jacobian water foam calculation
   - Todo: RT + Particle system water foam and interaction (stylized)
   - Todo: Underwater Post Process / Midwater look through effect (Maybe use stencil + post processing / world space near-camera water surface calculation + post processing)
+    - Another possible solution: render a depth map of the water top down above the camera, while in post-process, compare the screen pixel's vertical position in the world with the current water's height based on the depth map rendered (sounds like it, but I'm not sure). This solution supports Gerstner waves because it samples the water height after displacement.
+    - And Another one: render a near-plane dynamic mesh by sampling the water height at sepecific locations, render this mesh onto a low-res texture with a simple blur (render as white, background black, thus generating a mask texture at screen space). This solution does not support Gerstner waves, as Gerstner waves would change XZ position of water, causing the tracing of a height change on a fixed XZ point impossible (or extremely difficult).
+    - Actually, due to the consideration above, I would suggest using FFT waves for water movement (pure height map solution, only vertical movement).
   - Depth and ramp based water colorization
   - Gerstner / Sine wave and normal re-calculation
   - Edge foam
